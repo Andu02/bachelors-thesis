@@ -1,0 +1,12 @@
+# Node modules
+node_modules/
+
+# Environment files
+.env
+
+# Optional npm cache directory
+.npm/
+
+# VSCode settings
+.vscode/
+

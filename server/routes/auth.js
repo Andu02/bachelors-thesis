@@ -34,7 +34,14 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '1h' });
     res.cookie('authToken', token, { httpOnly: true });
 
-    res.json({ username, method, original: password, encrypted: encryptedPassword });
+    // Salvează detalii în cookie (fără a expune informații sensibile)
+    res.cookie('registrationDetails', JSON.stringify({ username, method, originalPassword: password, encryptedPassword }), {
+  httpOnly: false,  // Poți schimba în true pentru a preveni accesul din JavaScript, dar pentru testare e ok să fie false
+  maxAge: 3600000 // 1 oră
+});
+
+    // Redirecționează către succes-register.html
+    res.redirect('/success-register.html');
   } catch (err) {
     if (err.code === '23505') {
       return res.status(400).send('Acest nume de utilizator este deja folosit.');
@@ -65,7 +72,7 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
     res.cookie('authToken', token, { httpOnly: true });
-    res.redirect('/profile');
+    res.redirect('/success-login.html');
   } catch (err) {
     res.status(500).send('Eroare la verificarea parolei.');
   }

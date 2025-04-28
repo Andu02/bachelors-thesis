@@ -28,25 +28,35 @@
   </div>
 
   <script>
-    // Citim datele din URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const username = urlParams.get('username');
-    const method = urlParams.get('method');
-    const original = urlParams.get('original');
-    const encrypted = urlParams.get('encrypted');
-    const encryptionTime = urlParams.get('encryptionTime'); // Citim timpul de criptare
+    // Citește datele din cookies
+    const cookies = document.cookie.split(';');
+    let registrationDetails = null;
 
-    // Afișăm informațiile
-    const details = document.getElementById('encryption-details');
-    details.innerHTML = `
-      <p><strong>Metodă aleasă:</strong> ${method}</p>
-      <p><strong>Parola introdusă:</strong> ${original}</p>
-      <p><strong>Rezultat criptat:</strong> ${encrypted}</p>
-    `;
+    cookies.forEach(cookie => {
+      if (cookie.trim().startsWith('registrationDetails=')) {
+        const cookieValue = cookie.split('=')[1];
+        registrationDetails = JSON.parse(decodeURIComponent(cookieValue));
+      }
+    });
 
-    // Afișăm timpul de criptare
-    const timeElement = document.getElementById('encryption-time');
-    timeElement.textContent = `${encryptionTime} ms`; // Afișăm timpul în milisecunde
+    // Verifică dacă există date de înregistrare
+    if (registrationDetails) {
+      const { username, method, originalPassword, encryptedPassword } = registrationDetails;
+      const encryptionTime = new Date().getTime(); // Timpul criptării
+
+      // Afișăm informațiile
+      const details = document.getElementById('encryption-details');
+      details.innerHTML = `
+        <p><strong>Metodă aleasă:</strong> ${method}</p>
+        <p><strong>Nume utilizator:</strong> ${username}</p>
+        <p><strong>Parola introdusă:</strong> ${originalPassword}</p>
+        <p><strong>Rezultatul criptat:</strong> ${encryptedPassword}</p>
+      `;
+
+      // Afișăm timpul de criptare
+      const timeElement = document.getElementById('encryption-time');
+      timeElement.textContent = `${encryptionTime} ms`;
+    }
   </script>
 
 </body>

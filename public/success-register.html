@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cont creat</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    /* Permite afișarea textului lung pe mai multe linii */
+    #encrypted-password {
+      white-space: pre-wrap;  /* Permite formatarea textului pe mai multe linii */
+      word-wrap: break-word;  /* Împărțirea cuvintelor lungi */
+    }
+  </style>
 </head>
 <body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
 
@@ -28,21 +35,23 @@
   </div>
 
   <script>
-    // Citește datele din cookies
-    const cookies = document.cookie.split(';');
-    let registrationDetails = null;
-
-    cookies.forEach(cookie => {
-      if (cookie.trim().startsWith('registrationDetails=')) {
-        const cookieValue = cookie.split('=')[1];
-        registrationDetails = JSON.parse(decodeURIComponent(cookieValue));
+    // Funcție pentru a citi cookie-ul
+    function getCookie(name) {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [key, value] = cookie.trim().split('=');
+        if (key === name) {
+          return decodeURIComponent(value);
+        }
       }
-    });
+      return null;
+    }
 
-    // Verifică dacă există date de înregistrare
-    if (registrationDetails) {
-      const { username, method, originalPassword, encryptedPassword } = registrationDetails;
-      const encryptionTime = new Date().getTime(); // Timpul criptării
+    // Citește datele din cookie
+    const registrationDetailsCookie = getCookie('registrationDetails');
+    if (registrationDetailsCookie) {
+      const registrationDetails = JSON.parse(registrationDetailsCookie);
+      const { username, method, originalPassword, encryptedPassword, encryptionTime } = registrationDetails;
 
       // Afișăm informațiile
       const details = document.getElementById('encryption-details');
@@ -50,7 +59,7 @@
         <p><strong>Metodă aleasă:</strong> ${method}</p>
         <p><strong>Nume utilizator:</strong> ${username}</p>
         <p><strong>Parola introdusă:</strong> ${originalPassword}</p>
-        <p><strong>Rezultatul criptat:</strong> ${encryptedPassword}</p>
+        <p><strong>Rezultatul criptat:</strong> <span id="encrypted-password">${encryptedPassword}</span></p>
       `;
 
       // Afișăm timpul de criptare

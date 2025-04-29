@@ -3,7 +3,8 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import authRoutes from './routes/auth.js'; // extensia .js este obligatorie în ESM
+import authRoutes from './routes/authRoutes.js'; // extensia .js este obligatorie în ESM
+import simulationRouters from './routes/simulationRoutes.js';
 
 const app = express();
 
@@ -20,6 +21,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rute
 app.use('/', authRoutes);
+app.use('/', simulationRouters);
+
 
 // Fișiere statice
 app.use(express.static(path.join(__dirname, '../public')));

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulare atac criptografic</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .spinner-border {
+      width: 1.5rem;
+      height: 1.5rem;
+      vertical-align: text-bottom;
+    }
+  </style>
+</head>
+<body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
+
+  <div class="card shadow p-4 w-100" style="max-width: 600px;">
+    <h2 class="text-center mb-4">Simulează un atac asupra parolei tale</h2>
+
+    <p><strong>Utilizator:</strong> <%= username %></p>
+    <p><strong>Metodă criptare:</strong> <%= method %></p>
+    <p><strong>Parolă criptată:</strong> <code><%= hash %></code></p>
+
+    <form id="attack-form" class="mt-4">
+      <input type="hidden" id="method" value="<%= method %>" />
+      <input type="hidden" id="hash" value="<%= hash %>" />
+
+      <button type="submit" class="btn btn-danger w-100">
+        <span id="spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+        Execută atac automat
+      </button>
+    </form>
+
+    <div id="result" class="mt-4 alert d-none"></div>
+  </div>
+
+  <script>
+    document.getElementById('attack-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const algorithm = document.getElementById('method').value;
+      const hash = document.getElementById('hash').value;
+
+      const resultDiv = document.getElementById('result');
+      const spinner = document.getElementById('spinner');
+      resultDiv.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
+      resultDiv.classList.add('alert-warning');
+      resultDiv.textContent = '⏳ Se execută atacul...';
+      spinner.classList.remove('d-none');
+
+      try {
+        const res = await fetch('/simulate-attack', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ algorithm, hash })
+        });
+
+        const data = await res.json();
+        resultDiv.classList.remove('alert-warning');
+        spinner.classList.add('d-none');
+
+        if (data.success) {
+          resultDiv.classList.add('alert-success');
+          resultDiv.textContent = `✅ Atacul a reușit! Parola găsită: ${data.result}`;
+        } else {
+          resultDiv.classList.add('alert-danger');
+          resultDiv.textContent = `❌ ${data.message}`;
+        }
+
+      } catch (err) {
+        resultDiv.classList.remove('alert-warning');
+        resultDiv.classList.add('alert-danger');
+        spinner.classList.add('d-none');
+        resultDiv.textContent = '⚠️ Eroare la trimiterea cererii: ' + err.message;
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -23,7 +23,7 @@
     </button>
 
     <!-- Formularul ascuns inițial -->
-    <form id="change-password-form" action="/change-password" method="POST" class="d-none">
+    <form id="change-password-form" class="d-none">
       <div class="mb-3">
         <label for="old-password" class="form-label">Parola veche</label>
         <input type="password" class="form-control" id="old-password" name="oldPassword" required />
@@ -44,6 +44,10 @@
       <button type="submit" class="btn btn-primary w-100">Confirmă schimbarea</button>
     </form>
 
+    <!-- Mesaj feedback -->
+    <div id="change-password-message" class="alert d-none mt-3"></div>
+
+    <a href="/simulation" class="btn btn-warning w-100 mt-2">Simulează atac criptografic</a>
     <a href="/logout" class="btn btn-danger w-100 mt-3">Deconectare</a>
   </div>
 
@@ -57,6 +61,39 @@
 
       button.textContent = isHidden ? 'Anulează schimbarea parolei' : 'Schimbă parola';
     }
+
+    document.getElementById('change-password-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const oldPassword = document.getElementById('old-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const method = document.getElementById('method').value;
+      const messageDiv = document.getElementById('change-password-message');
+
+      try {
+        const response = await fetch('/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ oldPassword, newPassword, method })
+        });
+
+        const text = await response.text();
+
+        messageDiv.classList.remove('d-none', 'alert-success', 'alert-danger');
+        messageDiv.classList.add(response.ok ? 'alert-success' : 'alert-danger');
+        messageDiv.textContent = text;
+
+        if (response.ok) {
+          // Golește câmpurile
+          document.getElementById('old-password').value = '';
+          document.getElementById('new-password').value = '';
+        }
+      } catch (err) {
+        messageDiv.classList.remove('d-none');
+        messageDiv.classList.add('alert-danger');
+        messageDiv.textContent = 'A apărut o eroare: ' + err.message;
+      }
+    });
   </script>
 
 </body>

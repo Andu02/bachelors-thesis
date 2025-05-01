@@ -38,6 +38,7 @@
         <label for="method" class="form-label">Noua metodă de criptare</label>
         <select class="form-select" id="method" name="method" required>
           <%- include('partials/encryption-methods') %>
+          <%- include('partials/hill-advanced-options') %>
         </select>
       </div>
 
@@ -95,6 +96,7 @@
       }
     });
   </script>
+  <script src="/hill-matrix.js"></script>
 
 </body>
 </html>

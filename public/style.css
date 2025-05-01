@@ -13,23 +13,23 @@ body {
     box-shadow: 0 0 10px #ccc;
   }
   
-  h2 {
+h2 {
     text-align: center;
   }
   
-  label {
+label {
     display: block;
     margin-top: 1em;
   }
   
-  input,
+input,
   select {
     width: 100%;
     padding: 0.7em;
     margin-top: 0.5em;
   }
   
-  button {
+button {
     margin-top: 1.5em;
     padding: 0.8em;
     width: 100%;
@@ -43,3 +43,10 @@ body {
     background-color: #0077a6;
   }
   
+/* Elimina săgețelele din câmpurile type="number" */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+

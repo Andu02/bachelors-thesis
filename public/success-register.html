@@ -64,8 +64,7 @@
 
       // Afișăm timpul de criptare
       const timeElement = document.getElementById('encryption-time');
-      timeElement.textContent = `${encryptionTime} ms`;
-    }
+      timeElement.textContent = encryptionTime !== undefined? `${encryptionTime} ms`: 'nedisponibil';}
   </script>
 
 </body>

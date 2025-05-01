@@ -9,9 +9,8 @@ import { encrypt as ecbEncrypt } from '../crypto-methods/ecb.js';
 import { encrypt as cbcEncrypt } from '../crypto-methods/cbc.js';
 import { encrypt as bcryptEncrypt, compare as bcryptCompare } from '../crypto-methods/bcrypt.js';
 
-export async function encryptPassword(method, password) {
+export async function encryptPassword(method, password, extra = {}) {
   switch (method) {
-    // Clasice
     case 'caesar':
       return caesarEncrypt(password, 3);
     case 'affine':
@@ -19,34 +18,29 @@ export async function encryptPassword(method, password) {
     case 'vigenere':
       return vigenereEncrypt(password, "KEY");
     case 'hill':
-      return hillEncrypt(password);
+      return hillEncrypt(password, extra.hillKey);
     case 'transposition':
       return transpositionEncrypt(password);
     case 'permutation':
       return permutationEncrypt(password);
-
-    // Moderne
     case 'rsa':
       return rsaEncrypt(password);
     case 'bcrypt':
       return await bcryptEncrypt(password);
-
-    // Pe blocuri (simulate)
     case 'ecb':
       return ecbEncrypt(password);
     case 'cbc':
       return cbcEncrypt(password, "IV");
-
     default:
       throw new Error('Metodă de criptare necunoscută');
   }
 }
 
-export async function comparePasswords(method, input, stored) {
+export async function comparePasswords(method, input, stored, extra = {}) {
   if (method === 'bcrypt') {
     return await bcryptCompare(input, stored);
   } else {
-    const encryptedInput = await encryptPassword(method, input);
+    const encryptedInput = await encryptPassword(method, input, extra);
     return encryptedInput === stored;
   }
 }

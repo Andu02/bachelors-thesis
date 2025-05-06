@@ -8,7 +8,7 @@ function toggleForm() {
     : "Schimbă parola";
 }
 
-document
+document``
   .getElementById("change-password-form")
   .addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -51,10 +51,10 @@ document
         }),
       });
 
-      const text = await response.text();
+      const data = await response.json();
       messageDiv.classList.remove("d-none", "alert-success", "alert-danger");
       messageDiv.classList.add(response.ok ? "alert-success" : "alert-danger");
-      messageDiv.textContent = text;
+      messageDiv.textContent = data.message;
 
       if (response.ok) {
         document.getElementById("old-password").value = "";

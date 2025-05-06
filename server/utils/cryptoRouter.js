@@ -12,31 +12,27 @@ import {
   compare as bcryptCompare,
 } from "../crypto-methods/bcrypt.js";
 
+const encryptionMethods = {
+  caesar: (password, extra) => caesarEncrypt(password, 3),
+  affine: (password, extra) => affineEncrypt(password, 5, 8),
+  vigenere: (password, extra) => vigenereEncrypt(password, "KEY"),
+  hill: (password, extra) => hillEncrypt(password, extra.hillKey),
+  transposition: (password, extra) => transpositionEncrypt(password),
+  permutation: (password, extra) => permutationEncrypt(password),
+  rsa: (password, extra) => rsaEncrypt(password),
+  bcrypt: async (password, extra) => await bcryptEncrypt(password),
+  ecb: (password, extra) =>
+    ecbEncrypt(password, extra.symmetricKey || "DEFAULT"),
+  cbc: (password, extra) =>
+    cbcEncrypt(password, extra.symmetricKey || "DEFAULT"),
+};
+
 export async function encryptPassword(method, password, extra = {}) {
-  switch (method) {
-    case "caesar":
-      return caesarEncrypt(password, 3);
-    case "affine":
-      return affineEncrypt(password, 5, 8);
-    case "vigenere":
-      return vigenereEncrypt(password, "KEY");
-    case "hill":
-      return hillEncrypt(password, extra.hillKey);
-    case "transposition":
-      return transpositionEncrypt(password);
-    case "permutation":
-      return permutationEncrypt(password);
-    case "rsa":
-      return rsaEncrypt(password);
-    case "bcrypt":
-      return await bcryptEncrypt(password);
-    case "ecb":
-      return ecbEncrypt(password, extra.symmetricKey || "DEFAULT");
-    case "cbc":
-      return cbcEncrypt(password, extra.symmetricKey || "DEFAULT");
-    default:
-      throw new Error("Metodă de criptare necunoscută");
+  const encryptFunc = encryptionMethods[method];
+  if (!encryptFunc) {
+    throw new Error("Metodă de criptare necunoscută");
   }
+  return await encryptFunc(password, extra);
 }
 
 export async function comparePasswords(method, input, stored, extra = {}) {

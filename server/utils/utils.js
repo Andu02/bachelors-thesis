@@ -16,3 +16,14 @@ export function getEncryptionData(method, hill, symmetricKey) {
 
   return { encryptionKey, hillMatrix, symmetricKey };
 }
+
+// Funcție auxiliară pentru extragerea parametrilor suplimentari
+export function buildExtraParams(method, encryptionKey) {
+  const extra = {};
+  if (method === "hill" && encryptionKey) {
+    extra.hillKey = JSON.parse(encryptionKey);
+  } else if ((method === "ecb" || method === "cbc") && encryptionKey) {
+    extra.symmetricKey = encryptionKey;
+  }
+  return extra;
+}

@@ -138,10 +138,10 @@ router.post("/login", async (req, res) => {
 // RUTA PROFIL
 router.get("/profile", (req, res) => {
   const token = req.cookies.authToken;
-  if (!token) return res.redirect("/login.html");
+  if (!token) return res.redirect("/login");
 
   jwt.verify(token, JWT_SECRET, async (err, decoded) => {
-    if (err) return res.redirect("/login.html");
+    if (err) return res.redirect("/login");
 
     try {
       const result = await pool.query(
@@ -149,6 +149,12 @@ router.get("/profile", (req, res) => {
         [decoded.username]
       );
       const user = result.rows[0];
+
+      // 🔒 Setează antete pentru prevenirea cache-ului
+      res.setHeader("Cache-Control", "no-store");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+
       res.render("profile", { user, message: null });
     } catch (err) {
       console.error("Eroare la obținerea datelor utilizatorului:", err);
@@ -223,7 +229,8 @@ router.post("/change-password", async (req, res) => {
 // RUTA DELOGARE
 router.get("/logout", (req, res) => {
   res.clearCookie("authToken");
-  res.redirect("/index");
+  res.clearCookie("registrationDetails"); // șterge și detaliile de înregistrare
+  res.redirect("/");
 });
 
 export default router;

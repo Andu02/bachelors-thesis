@@ -1,33 +1,25 @@
-<!-- Opțiuni suplimentare pentru ECB / CBC -->
+<!-- ECB / CBC -->
 <div id="symmetric-key-group" class="mb-3" style="display: none;">
   <label for="symmetric-key" class="form-label">Cheie de criptare</label>
   <input type="text" id="symmetric-key" name="symmetricKey" class="form-control"
          placeholder="Ex: SECUREKEY123" maxlength="32" minlength="4" />
 </div>
 
-<!-- Opțiuni suplimentare pentru Cifrul Hill -->
+<!-- Cifrul Hill -->
 <div id="hill-options" class="mb-3" style="display: none;">
   <label for="hill-size" class="form-label">Dimensiune matrice Hill</label>
   <select id="hill-size" class="form-select">
     <option value="2">2x2</option>
     <option value="3">3x3</option>
   </select>
-
   <div id="hill-matrix-container" class="mt-3"></div>
 </div>
 
-<!-- Opțiuni suplimentare pentru RSA -->
+<!-- RSA -->
 <div id="rsa-options" class="mb-3" style="display: none;">
   <label class="form-label">Parametri RSA</label>
-
-  <input type="number" class="form-control mb-2" id="rsa-p" name="rsa[p]" min="3"
-         placeholder="p - număr prim" />
-
-  <input type="number" class="form-control mb-2" id="rsa-q" name="rsa[q]" min="3"
-         placeholder="q - număr prim" />
-
-  <input type="number" class="form-control mb-2" id="rsa-e" name="rsa[e]" min="3"
-         placeholder="e - exponent public" />
-
+  <input type="number" id="rsa-p" name="rsa[p]" class="form-control mb-2" placeholder="p (prim)" />
+  <input type="number" id="rsa-q" name="rsa[q]" class="form-control mb-2" placeholder="q (prim)" />
+  <input type="number" id="rsa-e" name="rsa[e]" class="form-control" placeholder="e (exponent public)" />
   <div id="rsa-warning" class="alert alert-warning mt-2 d-none"></div>
 </div>

@@ -1,40 +1,34 @@
-<%- include('partials/header', { title: "Înregistrare" }) %>
+<%- include('partials/header', { title: "Înregistrare utilizator" }) %>
 
-  <div class="card shadow p-4" style="width: 100%; max-width: 450px;">
-    <h2 class="text-center mb-4">Creare cont nou</h2>
+<div class="card shadow p-4" style="width: 100%; max-width: 450px;">
+  <h2 class="text-center mb-4">Creare cont nou</h2>
 
-    <% if (message) { %>
-      <div class="alert alert-danger text-center">
-        <%= message %>
-      </div>
-    <% } %>
+  <% if (message) { %>
+    <div class="alert alert-danger text-center"><%= message %></div>
+  <% } %>
 
-    <form id="register-form" action="/register" method="POST" autocomplete="off" autofill="off">
-      <div class="mb-3">
-        <label for="username" class="form-label">Nume utilizator</label>
-        <input type="text" class="form-control" id="username" name="username"
-          required minlength="3" maxlength="20" />
-      </div>
+  <form id="register-form" action="/register" method="POST" autocomplete="off">
+    <div class="mb-3">
+      <label for="username" class="form-label">Nume utilizator</label>
+      <input type="text" class="form-control" id="username" name="username" required minlength="3" maxlength="20" />
+    </div>
 
-      <div class="mb-3">
-        <label for="password" class="form-label">Parolă</label>
-        <input type="password" class="form-control" id="password" name="password"
-          required minlength="6" maxlength="30" />
-      </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Parolă</label>
+      <input type="password" class="form-control" id="password" name="password" required minlength="6" maxlength="30" />
+    </div>
 
-      <div class="mb-3">
-        <label for="method" class="form-label">Metodă de criptare</label>
-        <select class="form-select" id="method" name="method" required>
-          <%- include('partials/encryption-methods') %>
-        </select>
-      </div>
+    <div class="mb-3">
+      <label for="method" class="form-label">Metodă de criptare</label>
+      <select class="form-select" id="method" name="method" required>
+        <%- include('partials/encryption-methods') %>
+      </select>
+    </div>
 
-      <!-- Opțiuni suplimentare pentru Cifrul Hill si ECB -->
-      <%- include('partials/method-options') %>
+    <%- include('partials/method-options') %>
 
-      <button type="submit" class="btn btn-primary w-100">Creează cont</button>
-    </form>
-  </div>
+    <button type="submit" class="btn btn-primary w-100">Creează cont</button>
+  </form>
+</div>
 
 <%- include('partials/footer') %>
-

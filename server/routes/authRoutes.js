@@ -8,6 +8,11 @@ import { validateUsername, validatePassword } from "../utils/validators.js";
 const router = express.Router();
 const JWT_SECRET = "secretKey"; // În producție folosește .env
 
+// RUTA PRINCIPALĂ
+router.get("/", (req, res) => {
+  res.render("index");
+});
+
 // RUTA REGISTER
 router.get("/register", (req, res) => {
   res.render("register", { message: null });
@@ -28,17 +33,26 @@ router.post("/register", async (req, res) => {
     });
   }
 
+  if (method === "rsa") {
+    if (!rsa || !rsa.p || !rsa.q || !rsa.e) {
+      return res.render("register", {
+        message: "Pentru metoda RSA trebuie completate p, q și e.",
+      });
+    }
+  }
+
   try {
     const {
       encryptionKey,
       hillMatrix,
       symmetricKey: symKey,
-    } = getEncryptionData(method, hill, symmetricKey);
+    } = getEncryptionData(method, hill, symmetricKey, rsa);
 
     const start = Date.now();
     const encryptedPassword = await encryptPassword(method, password, {
       hillKey: hillMatrix,
       symmetricKey: symKey,
+      rsa,
     });
     const encryptionTime = Date.now() - start;
 
@@ -62,20 +76,22 @@ router.post("/register", async (req, res) => {
       { httpOnly: false, maxAge: 3600000 }
     );
 
-    res.render("success-register", {
-      details: JSON.parse(req.cookies.registrationDetails || "{}"),
-    });
+    res.redirect("/success-register");
   } catch (err) {
-    if (err.code === "23505") {
-      return res.render("register", {
-        message: "Acest nume de utilizator este deja folosit.",
-      });
-    }
     console.error("Eroare la înregistrare:", err);
     res
       .status(500)
       .render("register", { message: "Eroare la salvare în baza de date." });
   }
+});
+
+router.get("/success-register", (req, res) => {
+  const details = req.cookies.registrationDetails
+    ? JSON.parse(req.cookies.registrationDetails)
+    : null;
+
+  if (!details) return res.redirect("/register");
+  res.render("success-register", { details });
 });
 
 // RUTA LOGIN (GET)
@@ -197,7 +213,7 @@ router.post("/change-password", async (req, res) => {
 // RUTA DELOGARE
 router.get("/logout", (req, res) => {
   res.clearCookie("authToken");
-  res.redirect("/index.html");
+  res.redirect("/index");
 });
 
 export default router;

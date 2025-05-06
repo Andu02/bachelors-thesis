@@ -1,0 +1,94 @@
+.theme-switch {
+    position: fixed;
+    top: 0;
+    right: 15px;
+    z-index: 1000;
+  }
+  
+  .switch-label {
+    display: inline-block;
+    width: 80px;
+    height: 40px;
+    background: #cce7ff;
+    border-radius: 40px;
+    position: relative;
+    cursor: pointer;
+    background-size: cover;
+    transition: background 0.4s ease;
+  }
+  
+  .switch-label::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+  
+  #toggle-checkbox:checked + .switch-label {
+    background: #1a237e;
+    background-size: cover;
+  }
+  
+  #toggle-checkbox:checked + .switch-label::after {
+    transform: translateX(40px);
+  }
+  
+  /* Fundal global */
+  body.dark-mode {
+    background-color: #0d0d0d !important;
+    color: #f5f5f5 !important;
+  }
+  
+  /* Carduri și containere */
+  body.dark-mode .card {
+    background-color: #1a1a1a !important;
+    color: #f5f5f5;
+    border-color: #333;
+  }
+  
+  /* Inputuri, select, textarea */
+  body.dark-mode input,
+  body.dark-mode select,
+  body.dark-mode textarea {
+    background-color: #262626 !important;
+    color: #ffffff !important;
+    border-color: #555 !important;
+  }
+  
+  /* Dropdown select din Bootstrap */
+  body.dark-mode .form-select {
+    background-color: #262626 !important;
+    color: #ffffff !important;
+    border-color: #555 !important;
+  }
+  
+  /* Butoane */
+  body.dark-mode .btn {
+    background-color: #444 !important;
+    color: #fff !important;
+    border-color: #666 !important;
+  }
+  
+  /* Alert boxes (info, warning, etc) */
+  body.dark-mode .alert {
+    background-color: #1f1f1f !important;
+    color: #e6e6e6 !important;
+    border-color: #444 !important;
+  }
+  
+  body.dark-mode .list-group-item {
+    background-color: #1e1e1e;
+    color: #fff;
+    border-color: #333;
+  }
+  
+  body.dark-mode .list-group {
+    background-color: transparent;
+  }
+  
+  

@@ -50,3 +50,8 @@ input[type=number]::-webkit-outer-spin-button {
   margin: 0;
 }
 
+.spinner-border {
+  width: 1.5rem;
+  height: 1.5rem;
+  vertical-align: text-bottom;
+}

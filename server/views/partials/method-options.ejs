@@ -15,3 +15,19 @@
 
   <div id="hill-matrix-container" class="mt-3"></div>
 </div>
+
+<!-- Opțiuni suplimentare pentru RSA -->
+<div id="rsa-options" class="mb-3" style="display: none;">
+  <label class="form-label">Parametri RSA</label>
+
+  <input type="number" class="form-control mb-2" id="rsa-p" name="rsa[p]" min="3"
+         placeholder="p - număr prim" />
+
+  <input type="number" class="form-control mb-2" id="rsa-q" name="rsa[q]" min="3"
+         placeholder="q - număr prim" />
+
+  <input type="number" class="form-control mb-2" id="rsa-e" name="rsa[e]" min="3"
+         placeholder="e - exponent public" />
+
+  <div id="rsa-warning" class="alert alert-warning mt-2 d-none"></div>
+</div>

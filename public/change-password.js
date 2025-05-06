@@ -8,7 +8,7 @@ function toggleForm() {
     : "Schimbă parola";
 }
 
-document``
+document
   .getElementById("change-password-form")
   .addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -27,7 +27,7 @@ document``
     );
     const hill = {};
     hillInputs.forEach((input) => {
-      const match = input.name.match(/hill\\[(\\d+)]\\[(\\d+)]/);
+      const match = input.name.match(/hill\[(\d+)]\[(\d+)]/);
       if (match) {
         const i = match[1],
           j = match[2];
@@ -37,6 +37,15 @@ document``
     });
 
     const messageDiv = document.getElementById("change-password-message");
+
+    // ✅ VERIFICARE: parola nouă nu trebuie să fie identică cu cea veche
+    if (oldPassword === newPassword) {
+      messageDiv.classList.remove("d-none", "alert-success");
+      messageDiv.classList.add("alert-danger");
+      messageDiv.textContent =
+        "Parola nouă nu poate fi identică cu parola veche.";
+      return;
+    }
 
     try {
       const response = await fetch("/change-password", {

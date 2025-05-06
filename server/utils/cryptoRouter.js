@@ -19,7 +19,7 @@ const encryptionMethods = {
   hill: (password, extra) => hillEncrypt(password, extra.hillKey),
   transposition: (password, extra) => transpositionEncrypt(password),
   permutation: (password, extra) => permutationEncrypt(password),
-  rsa: (password, extra) => rsaEncrypt(password),
+  rsa: (password, extra) => rsaEncrypt(password, extra.rsa),
   bcrypt: async (password, extra) => await bcryptEncrypt(password),
   ecb: (password, extra) =>
     ecbEncrypt(password, extra.symmetricKey || "DEFAULT"),

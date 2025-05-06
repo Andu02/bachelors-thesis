@@ -14,7 +14,7 @@ router.get("/register", (req, res) => {
 });
 
 router.post("/register", async (req, res) => {
-  const { username, password, method, hill, symmetricKey } = req.body;
+  const { username, password, method, hill, symmetricKey, rsa } = req.body;
 
   if (!validateUsername(username)) {
     return res.render("register", {
@@ -62,7 +62,9 @@ router.post("/register", async (req, res) => {
       { httpOnly: false, maxAge: 3600000 }
     );
 
-    res.redirect("/success-register.html");
+    res.render("success-register", {
+      details: JSON.parse(req.cookies.registrationDetails || "{}"),
+    });
   } catch (err) {
     if (err.code === "23505") {
       return res.render("register", {
@@ -110,7 +112,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
     res.cookie("authToken", token, { httpOnly: true });
 
-    res.redirect("/success-login.html");
+    res.render("success-login", { username });
   } catch (err) {
     console.error("Eroare la autentificare:", err);
     res.status(500).render("login", { message: "Eroare la autentificare." });
@@ -141,7 +143,7 @@ router.get("/profile", (req, res) => {
 
 // RUTA SCHIMBARE PAROLĂ
 router.post("/change-password", async (req, res) => {
-  const { oldPassword, newPassword, method, hill, symmetricKey } = req.body;
+  const { username, password, method, hill, symmetricKey, rsa } = req.body;
   const token = req.cookies.authToken;
 
   if (!token) return res.status(401).send("Nu sunteți autentificat.");

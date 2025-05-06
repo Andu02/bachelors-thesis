@@ -36,9 +36,15 @@ document
       }
     });
 
+    // RSA
+    const rsaP = document.getElementById("rsa-p")?.value;
+    const rsaQ = document.getElementById("rsa-q")?.value;
+    const rsaE = document.getElementById("rsa-e")?.value;
+    const rsa = rsaP && rsaQ && rsaE ? { p: rsaP, q: rsaQ, e: rsaE } : null;
+
     const messageDiv = document.getElementById("change-password-message");
 
-    // ✅ VERIFICARE: parola nouă nu trebuie să fie identică cu cea veche
+    // ✅ Verificare: parola nouă să fie diferită
     if (oldPassword === newPassword) {
       messageDiv.classList.remove("d-none", "alert-success");
       messageDiv.classList.add("alert-danger");
@@ -57,6 +63,7 @@ document
           method,
           hill,
           symmetricKey,
+          rsa,
         }),
       });
 

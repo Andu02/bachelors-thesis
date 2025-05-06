@@ -159,42 +159,52 @@ router.get("/profile", (req, res) => {
 
 // RUTA SCHIMBARE PAROLĂ
 router.post("/change-password", async (req, res) => {
-  const { username, password, method, hill, symmetricKey, rsa } = req.body;
+  const { oldPassword, newPassword, method, hill, symmetricKey, rsa } =
+    req.body;
   const token = req.cookies.authToken;
 
-  if (!token) return res.status(401).send("Nu sunteți autentificat.");
+  if (!token)
+    return res.status(401).json({ message: "Nu sunteți autentificat." });
 
   if (!validatePassword(newPassword)) {
-    return res
-      .status(400)
-      .send("Parola nouă trebuie să aibă între 6 și 30 de caractere.");
+    return res.status(400).json({
+      message: "Parola nouă trebuie să aibă între 6 și 30 de caractere.",
+    });
   }
 
   jwt.verify(token, JWT_SECRET, async (err, decoded) => {
-    if (err) return res.status(401).send("Token invalid.");
-
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
-      decoded.username,
-    ]);
-    const user = result.rows[0];
-
-    const valid = await comparePasswords(
-      user.method,
-      oldPassword,
-      user.password,
-      buildExtraParams(user.method, user.encryption_key)
-    );
-    if (!valid) return res.status(400).send("Parola veche este incorectă.");
+    if (err) return res.status(401).json({ message: "Token invalid." });
 
     try {
+      const result = await pool.query(
+        "SELECT * FROM users WHERE username = $1",
+        [decoded.username]
+      );
+      const user = result.rows[0];
+
+      const valid = await comparePasswords(
+        user.method,
+        oldPassword,
+        user.password,
+        buildExtraParams(user.method, user.encryption_key)
+      );
+
+      if (!valid) {
+        return res
+          .status(400)
+          .json({ message: "Parola veche este incorectă." });
+      }
+
       const {
         encryptionKey,
         hillMatrix,
         symmetricKey: symKey,
-      } = getEncryptionData(method, hill, symmetricKey);
+      } = getEncryptionData(method, hill, symmetricKey, rsa);
+
       const newHashed = await encryptPassword(method, newPassword, {
         hillKey: hillMatrix,
         symmetricKey: symKey,
+        rsa,
       });
 
       await pool.query(
@@ -202,10 +212,10 @@ router.post("/change-password", async (req, res) => {
         [newHashed, method, encryptionKey, decoded.username]
       );
 
-      res.send("Parola a fost schimbată cu succes!");
+      res.status(200).json({ message: "Parola a fost schimbată cu succes!" });
     } catch (err) {
       console.error("Eroare la schimbarea parolei:", err);
-      res.status(500).send("Eroare la schimbarea parolei.");
+      res.status(500).json({ message: "Eroare la schimbarea parolei." });
     }
   });
 });

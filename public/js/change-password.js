@@ -42,6 +42,10 @@ document
     const rsaE = document.getElementById("rsa-e")?.value;
     const rsa = rsaP && rsaQ && rsaE ? { p: rsaP, q: rsaQ, e: rsaE } : null;
 
+    // Affine
+    const affineA = document.getElementById("affine-a")?.value;
+    const affineB = document.getElementById("affine-b")?.value;
+
     const messageDiv = document.getElementById("change-password-message");
 
     // ✅ Verificare: parola nouă să fie diferită

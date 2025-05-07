@@ -15,20 +15,42 @@ router.get("/register", (req, res) => {
 
 // Ruta POST /register
 router.post("/register", validateRegisterFields, async (req, res) => {
-  const { username, password, method, hill, symmetricKey, rsa } = req.body;
+  const {
+    username,
+    password,
+    method,
+    caesarKey,
+    hill,
+    symmetricKey,
+    rsa,
+    affineA,
+    affineB,
+  } = req.body;
 
   try {
     const {
       encryptionKey,
       hillMatrix,
       symmetricKey: symKey,
-    } = getEncryptionData(method, hill, symmetricKey, rsa);
+    } = getEncryptionData(
+      method,
+      hill,
+      symmetricKey,
+      rsa,
+      parseInt(caesarKey),
+      {
+        a: parseInt(affineA),
+        b: parseInt(affineB),
+      }
+    );
 
     const start = Date.now();
     const encryptedPassword = await encryptPassword(method, password, {
       hillKey: hillMatrix,
       symmetricKey: symKey,
       rsa,
+      caesarKey: parseInt(caesarKey),
+      affine: { a: parseInt(affineA), b: parseInt(affineB) },
     });
     const encryptionTime = Date.now() - start;
 
@@ -90,6 +112,9 @@ router.post("/login", async (req, res) => {
     if (user.method === "rsa") {
       const { p, q, e } = JSON.parse(user.encryption_key);
       extra.rsa = { p: BigInt(p), q: BigInt(q), e: BigInt(e) };
+    } else if (user.method === "affine") {
+      const { a, b } = JSON.parse(user.encryption_key);
+      extra.affine = { a: parseInt(a), b: parseInt(b) };
     } else {
       extra = getEncryptionData(user.method, null, null, null);
     }

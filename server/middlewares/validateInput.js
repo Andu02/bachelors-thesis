@@ -1,7 +1,21 @@
-import { validateUsername, validatePassword } from "../utils/validators.js";
+function validateUsername(username) {
+  return (
+    typeof username === "string" &&
+    username.length >= 3 &&
+    username.length <= 20
+  );
+}
+
+function validatePassword(password) {
+  return (
+    typeof password === "string" &&
+    password.length >= 6 &&
+    password.length <= 30
+  );
+}
 
 export function validateRegisterFields(req, res, next) {
-  const { username, password } = req.body;
+  const { username, password, method } = req.body;
 
   if (!validateUsername(username)) {
     return res.render("register", {
@@ -12,6 +26,12 @@ export function validateRegisterFields(req, res, next) {
   if (!validatePassword(password)) {
     return res.render("register", {
       message: "Parola trebuie să aibă între 6 și 30 de caractere.",
+    });
+  }
+
+  if (!method || method === "") {
+    return res.render("register", {
+      message: "Te rugăm să alegi o metodă de criptare.",
     });
   }
 

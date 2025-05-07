@@ -34,8 +34,15 @@ router.post(
   requireAuth,
   validateNewPassword,
   async (req, res) => {
-    const { oldPassword, newPassword, method, hill, symmetricKey, rsa } =
-      req.body;
+    const {
+      oldPassword,
+      newPassword,
+      method,
+      hill,
+      symmetricKey,
+      rsa,
+      caesarKey,
+    } = req.body;
 
     try {
       const result = await pool.query(
@@ -60,12 +67,13 @@ router.post(
         encryptionKey,
         hillMatrix,
         symmetricKey: symKey,
-      } = getEncryptionData(method, hill, symmetricKey, rsa);
+      } = getEncryptionData(method, hill, symmetricKey, rsa, caesarKey);
 
       const newHashed = await encryptPassword(method, newPassword, {
         hillKey: hillMatrix,
         symmetricKey: symKey,
         rsa,
+        caesarKey: parseInt(caesarKey),
       });
 
       await pool.query(

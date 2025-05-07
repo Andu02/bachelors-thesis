@@ -13,8 +13,9 @@ import {
 } from "../crypto-methods/bcrypt.js";
 
 const encryptionMethods = {
-  caesar: (password, extra) => caesarEncrypt(password, extra.caesarShift || 3),
-  affine: (password, extra) => affineEncrypt(password, 5, 8),
+  caesar: (password, extra) => caesarEncrypt(password, extra.caesarKey),
+  affine: (password, extra) =>
+    affineEncrypt(password, extra.affine?.a, extra.affine?.b),
   vigenere: (password, extra) => vigenereEncrypt(password, "KEY"),
   hill: (password, extra) => hillEncrypt(password, extra.hillKey),
   transposition: (password, extra) => transpositionEncrypt(password),

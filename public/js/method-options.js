@@ -1,5 +1,15 @@
 const methodSelect = document.getElementById("method");
 
+// Caesar
+const caesarKeyGroup = document.getElementById("caesar-key-group");
+const caesarKeyInput = document.getElementById("caesar-key");
+
+// Affine
+const affineOptions = document.getElementById("affine-options");
+const affineA = document.getElementById("affine-a");
+const affineB = document.getElementById("affine-b");
+const affineWarning = document.getElementById("affine-warning");
+
 // Hill
 const hillOptions = document.getElementById("hill-options");
 const hillSizeSelect = document.getElementById("hill-size");
@@ -16,13 +26,38 @@ const rsaWarning = document.getElementById("rsa-warning");
 // Schimbarea metodei
 methodSelect.addEventListener("change", () => {
   const method = methodSelect.value;
+  if (!method) return;
+
+  // Caesar
+  if (method === "caesar") {
+    caesarKeyGroup.style.display = "block";
+    caesarKeyInput?.removeAttribute("disabled");
+    caesarKeyInput?.setAttribute("required", "true");
+  } else {
+    caesarKeyGroup.style.display = "none";
+    caesarKeyInput?.removeAttribute("required");
+    caesarKeyInput?.setAttribute("disabled", "true");
+  }
+
+  // Affine
+  if (method === "affine") {
+    affineOptions.style.display = "block";
+  } else {
+    affineOptions.style.display = "none";
+    affineWarning.classList.add("d-none");
+    affineWarning.textContent = "";
+  }
 
   // Hill
-  hillOptions.style.display = method === "hill" ? "block" : "none";
-  if (method === "hill") generateHillMatrix(parseInt(hillSizeSelect.value));
-  else hillMatrixContainer.innerHTML = "";
+  if (method === "hill") {
+    hillOptions.style.display = "block";
+    generateHillMatrix(parseInt(hillSizeSelect.value));
+  } else {
+    hillOptions.style.display = "none";
+    hillMatrixContainer.innerHTML = "";
+  }
 
-  // ECB/CBC
+  // ECB / CBC
   symmetricKeyGroup.style.display =
     method === "ecb" || method === "cbc" ? "block" : "none";
 
@@ -35,7 +70,7 @@ methodSelect.addEventListener("change", () => {
     });
   } else if (rsaOptions) {
     rsaOptions.style.display = "none";
-    rsaWarning?.classList.add("d-none");
+    rsaWarning.classList.add("d-none");
     rsaInputs.forEach((input) => {
       input.removeAttribute("required");
       input.setAttribute("disabled", "true");
@@ -43,6 +78,7 @@ methodSelect.addEventListener("change", () => {
   }
 });
 
+// Re-generează matricea Hill
 hillSizeSelect?.addEventListener("change", () => {
   generateHillMatrix(parseInt(hillSizeSelect.value));
 });
@@ -68,12 +104,13 @@ function generateHillMatrix(n) {
   hillMatrixContainer.appendChild(table);
 }
 
-// RSA validare
+// GCD - comun pentru Affine și RSA
 function gcd(a, b) {
   while (b !== 0n) [a, b] = [b, a % b];
   return a;
 }
 
+// Verificare RSA
 function checkRSAValidity() {
   try {
     const p = BigInt(document.getElementById("rsa-p").value);
@@ -94,5 +131,36 @@ function checkRSAValidity() {
     return false;
   }
 }
+rsaInputs.forEach((input) =>
+  input?.addEventListener("input", checkRSAValidity)
+);
 
-rsaInputs.forEach((input) => input.addEventListener("input", checkRSAValidity));
+// Verificare Affine
+function validateAffineInputs() {
+  try {
+    const a = BigInt(affineA.value);
+    const b = BigInt(affineB.value);
+
+    if (gcd(a, 26n) !== 1n) {
+      affineWarning.classList.remove("d-none");
+      affineWarning.textContent = "Valoarea a trebuie să fie primă cu 26.";
+      return false;
+    }
+
+    if (b < 0n || b > 25n) {
+      affineWarning.classList.remove("d-none");
+      affineWarning.textContent = "Valoarea b trebuie să fie între 0 și 25.";
+      return false;
+    }
+
+    affineWarning.classList.add("d-none");
+    return true;
+  } catch {
+    affineWarning.classList.remove("d-none");
+    affineWarning.textContent = "Valori invalide pentru a sau b.";
+    return false;
+  }
+}
+[affineA, affineB].forEach((input) =>
+  input?.addEventListener("input", validateAffineInputs)
+);

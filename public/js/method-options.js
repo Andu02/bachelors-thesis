@@ -1,4 +1,11 @@
+import {
+  updatePasswordPattern,
+  adjustHillOptions,
+  generateHillMatrix,
+} from "./utils.js";
+
 const methodSelect = document.getElementById("method");
+const passwordInput = document.getElementById("password");
 
 // Caesar
 const caesarKeyGroup = document.getElementById("caesar-key-group");
@@ -25,6 +32,7 @@ const rsaWarning = document.getElementById("rsa-warning");
 
 methodSelect?.addEventListener("change", () => {
   const method = methodSelect.value;
+  updatePasswordPattern(method);
 
   // Caesar
   if (caesarKeyGroup && caesarKeyInput) {
@@ -54,6 +62,7 @@ methodSelect?.addEventListener("change", () => {
   if (hillOptions && hillMatrixContainer && hillSizeSelect) {
     if (method === "hill") {
       hillOptions.style.display = "block";
+      adjustHillOptions();
       generateHillMatrix(parseInt(hillSizeSelect.value));
     } else {
       hillOptions.style.display = "none";
@@ -85,3 +94,6 @@ methodSelect?.addEventListener("change", () => {
     }
   }
 });
+
+// 🔁 Monitorizează modificările în parolă pentru criptare Hill
+passwordInput?.addEventListener("input", adjustHillOptions);

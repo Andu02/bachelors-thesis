@@ -14,38 +14,44 @@
     </button>
 
     <form id="change-password-form" class="d-none">
-      <div class="mb-3">
-        <label for="old-password" class="form-label">Parola veche</label>
-        <input type="password" class="form-control" id="old-password" name="oldPassword"
-          required minlength="6" maxlength="30" />
-      </div>
-
-      <div class="mb-3">
-        <label for="new-password" class="form-label">Parola nouă</label>
-        <input type="password" class="form-control" id="new-password" name="newPassword"
-          required minlength="6" maxlength="30" />
-      </div>
-
-      <div class="mb-3">
-        <label for="method" class="form-label">Noua metodă de criptare</label>
-        <select class="form-select" id="method" name="method" required>
-          <%- include('partials/encryption-methods') %>
-        </select>
-      </div>
-
-      <!-- Opțiuni suplimentare pentru Hill și ECB/CBC -->
+      <label for="old-password" class="form-label">Parola veche</label>
+      <input
+        type="password"
+        class="form-control"
+        id="old-password"
+        name="oldPassword"
+        required
+        minlength="3"
+        maxlength="30"
+      />
+    
+      <label for="new-password" class="form-label mt-3">Parola nouă</label>
+      <input
+        type="text"
+        class="form-control"
+        id="new-password"
+        name="newPassword"
+        required
+        minlength="3"
+        maxlength="30"
+        pattern="[A-Za-z]+"
+        title="Doar litere A–Z (fără cifre, spații sau simboluri)"
+      />
+    
+      <label for="method" class="form-label mt-3">Noua metodă de criptare</label>
+      <select class="form-select" id="method" name="method" required>
+        <%- include('partials/encryption-methods') %>
+      </select>
+    
       <%- include('partials/method-options') %>
-
-      <button type="submit" class="btn btn-primary w-100">Confirmă schimbarea</button>
+    
+      <button type="submit" class="btn btn-warning w-100 mt-3">Schimbă parola</button>
     </form>
-
+    
     <div id="change-password-message" class="alert d-none mt-3"></div>
-
-    <a href="/simulation" class="btn btn-warning w-100 mt-2">Simulează atac criptografic</a>
-    <a href="/logout" class="btn btn-danger w-100 mt-3">Deconectare</a>
-  </div>
-
-  <script src="/js/change-password.js"></script>
-  <script src="/js/method-options.js"></script>
+    
+    <script type="module" src="/js/change-password.js"></script>
+    <script type="module" src="/js/method-options.js"></script>
+    
 <%- include('partials/footer') %>
 

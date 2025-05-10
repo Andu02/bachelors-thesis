@@ -1,15 +1,29 @@
 <!-- Caesar -->
 <div id="caesar-key-group" class="mb-3" style="display: none;">
   <label for="caesar-key" class="form-label">Cheie Caesar</label>
-  <input type="number" class="form-control" id="caesar-key" name="caesarKey" min="1" max="25" />
+  <select class="form-select" id="caesar-key" name="caesarKey" required>
+    <% for (let i = 1; i <= 25; i++) { %>
+      <option value="<%= i %>"><%= i %></option>
+    <% } %>
+  </select>
 </div>
 
 <!-- Affine -->
 <div id="affine-options" class="mb-3" style="display: none;">
   <label class="form-label">Chei Affine (a, b)</label>
   <div class="d-flex gap-2">
-    <input type="number" class="form-control" id="affine-a" name="affineA" placeholder="a" />
-    <input type="number" class="form-control" id="affine-b" name="affineB" placeholder="b" />
+    <select class="form-select" id="affine-a" name="affineA" required>
+      <% function gcd(a, b) {
+           while (b !== 0) [a, b] = [b, a % b];
+           return a;
+         }
+         for (let i = 1; i <= 25; i += 2) {
+           if (gcd(i, 26) === 1) { %>
+             <option value="<%= i %>"><%= i %></option>
+      <%   }
+         } %>
+    </select>
+    <input type="number" class="form-control" id="affine-b" name="affineB" placeholder="b" min="0" max="25" required />
   </div>
   <div id="affine-warning" class="form-text text-danger mt-1 d-none"></div>
 </div>
@@ -26,13 +40,13 @@
 
 <!-- ECB / CBC -->
 <div id="symmetric-key-group" class="mb-3" style="display: none;">
-  <label for="symmetric-key" class="form-label">Cheie simetrică</label>
+  <label for="symmetric-key" class="form-label">Cheie simetrică (ECB/CBC)</label>
   <input type="text" class="form-control" id="symmetric-key" name="symmetricKey" maxlength="32" />
 </div>
 
 <!-- RSA -->
 <div id="rsa-options" class="mb-3" style="display: none;">
-  <label class="form-label">Chei RSA</label>
+  <label class="form-label">Parametri RSA</label>
   <input type="number" class="form-control mb-2" name="rsaP" placeholder="p" />
   <input type="number" class="form-control mb-2" name="rsaQ" placeholder="q" />
   <input type="number" class="form-control mb-2" name="rsaE" placeholder="e" />

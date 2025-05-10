@@ -15,7 +15,17 @@
 
     <div class="mb-3">
       <label for="password" class="form-label">Parolă</label>
-      <input type="password" class="form-control" id="password" name="password" required minlength="6" maxlength="30" />
+      <input
+        type="text"
+        class="form-control"
+        id="password"
+        name="password"
+        required
+        minlength="3"
+        maxlength="30"
+        pattern="[A-Za-z]+"
+        title="Doar litere A–Z (fără cifre, spații sau simboluri)"
+      />
     </div>
 
     <div class="mb-3">
@@ -30,5 +40,5 @@
     <button type="submit" class="btn btn-primary w-100">Creează cont</button>
   </form>
 </div>
-<script src="/js/method-options.js"></script>
+<script type="module" src="/js/method-options.js"></script>
 <%- include('partials/footer') %>

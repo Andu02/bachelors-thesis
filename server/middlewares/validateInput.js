@@ -7,7 +7,16 @@ function validateUsername(username) {
 }
 
 function validatePasswordByMethod(password, method) {
-  if (method === "caesar" || method === "vigenere" || method === "hill") {
+  const onlyLettersMethods = [
+    "caesar",
+    "vigenere",
+    "hill",
+    "affine",
+    "transposition",
+    "permutation",
+  ];
+
+  if (onlyLettersMethods.includes(method)) {
     return /^[a-zA-Z]+$/.test(password);
   }
 
@@ -15,7 +24,7 @@ function validatePasswordByMethod(password, method) {
   return strongPasswordRegex.test(password);
 }
 
-function getPasswordErrorMessage(password, method) {
+export function getPasswordErrorMessage(password, method) {
   if (!validatePasswordByMethod(password, method)) {
     return method === "caesar" || method === "vigenere" || method === "hill"
       ? "Parola trebuie să conțină doar litere."

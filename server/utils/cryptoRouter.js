@@ -11,21 +11,29 @@ import {
   encrypt as bcryptEncrypt,
   compare as bcryptCompare,
 } from "../crypto-methods/bcrypt.js";
+import { isHillMatrixValid } from "../crypto-methods/hill.js";
+
+const DEFAULT_SYMMETRIC_KEY = "DEFAULT";
 
 const encryptionMethods = {
   caesar: (password, extra) => caesarEncrypt(password, extra.caesarKey),
-  affine: (password, extra) =>
-    affineEncrypt(password, extra.affine?.a, extra.affine?.b),
+  affine: (password, extra) => {
+    const { a, b } = extra.affine || {};
+    if (typeof a !== "number" || typeof b !== "number") {
+      throw new Error("Parametrii a și b lipsesc pentru cifrul Afin");
+    }
+    return affineEncrypt(password, a, b);
+  },
   vigenere: (password, extra) => vigenereEncrypt(password, "KEY"),
   hill: (password, extra) => hillEncrypt(password, extra.hillKey),
-  transposition: (password, extra) => transpositionEncrypt(password),
-  permutation: (password, extra) => permutationEncrypt(password),
+  transposition: (password) => transpositionEncrypt(password),
+  permutation: (password) => permutationEncrypt(password),
   rsa: (password, extra) => rsaEncrypt(password, extra.rsa),
-  bcrypt: async (password, extra) => await bcryptEncrypt(password),
+  bcrypt: async (password) => await bcryptEncrypt(password),
   ecb: (password, extra) =>
-    ecbEncrypt(password, extra.symmetricKey || "DEFAULT"),
+    ecbEncrypt(password, extra.symmetricKey || DEFAULT_SYMMETRIC_KEY),
   cbc: (password, extra) =>
-    cbcEncrypt(password, extra.symmetricKey || "DEFAULT"),
+    cbcEncrypt(password, extra.symmetricKey || DEFAULT_SYMMETRIC_KEY),
 };
 
 export async function encryptPassword(method, password, extra = {}) {
@@ -39,8 +47,7 @@ export async function encryptPassword(method, password, extra = {}) {
 export async function comparePasswords(method, input, stored, extra = {}) {
   if (method === "bcrypt") {
     return await bcryptCompare(input, stored);
-  } else {
-    const encryptedInput = await encryptPassword(method, input, extra);
-    return encryptedInput === stored;
   }
+  const encryptedInput = await encryptPassword(method, input, extra);
+  return encryptedInput === stored;
 }

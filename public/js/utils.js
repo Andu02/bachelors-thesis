@@ -1,80 +1,149 @@
+// 🔠 Setează pattern-ul de parolă în funcție de metoda aleasă
 export function updatePasswordPattern(method) {
-  const passwordInput = document.getElementById("password");
-  const onlyLetters = ["caesar", "affine", "vigenere", "hill"];
+  const passwordInput =
+    document.getElementById("password") ||
+    document.getElementById("new-password");
 
   if (!passwordInput) return;
 
-  if (onlyLetters.includes(method)) {
-    passwordInput.setAttribute("pattern", "[A-Za-z]+");
-    passwordInput.setAttribute(
-      "title",
-      "Doar litere A–Z (fără cifre, spații sau simboluri)"
-    );
+  if (
+    [
+      "caesar",
+      "vigenere",
+      "hill",
+      "affine",
+      "transposition",
+      "permutation",
+    ].includes(method)
+  ) {
+    passwordInput.pattern = "[A-Za-z]+";
+    passwordInput.title = "Doar litere A–Z (fără cifre, spații sau simboluri)";
   } else {
-    passwordInput.removeAttribute("pattern");
-    passwordInput.removeAttribute("title");
+    passwordInput.pattern = "^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$";
+    passwordInput.title =
+      "Minim 8 caractere, o literă mare, o cifră și un caracter special";
   }
 }
 
+// Hill ------------------------------------------
+
+// 🔄 Ajustează opțiunile pentru Hill în funcție de lungimea parolei
 export function adjustHillOptions() {
-  const passwordInput = document.getElementById("password");
-  const hillSizeSelect = document.getElementById("hill-size");
-  const hillOptions = document.getElementById("hill-options");
+  const sizeSelect = document.getElementById("hill-size");
+  const container = document.getElementById("hill-matrix-container");
+  const warning = document.getElementById("hill-warning");
+  const password = (document.getElementById("password") || {}).value || "";
 
-  if (!passwordInput || !hillSizeSelect || !hillOptions) return;
+  if (!sizeSelect || !container || !warning) return;
 
-  const clean = passwordInput.value.toUpperCase().replace(/[^A-Z]/g, "");
-  const len = clean.length;
-  const option3 = hillSizeSelect.querySelector('option[value="3"]');
+  const size = parseInt(sizeSelect.value);
+  const requiredLength = size * size;
 
-  // ⚠️ Dezactivează opțiunea 3x3 dacă parola e prea scurtă
-  if (option3) {
-    option3.disabled = len < 6;
-
-    if (option3.disabled && hillSizeSelect.value === "3") {
-      hillSizeSelect.value = "2";
-      generateHillMatrix(2);
-    }
+  if (password.length < requiredLength) {
+    warning.textContent = `Parola trebuie să aibă cel puțin ${requiredLength} caractere pentru o matrice ${size}x${size}.`;
+    warning.classList.remove("d-none");
+  } else {
+    warning.textContent = "";
+    warning.classList.add("d-none");
   }
-
-  // 🔴 Afișează avertisment DOAR dacă e selectat 3x3 și parola < 6
-  let warning = document.getElementById("hill-warning");
-  if (!warning) {
-    warning = document.createElement("div");
-    warning.id = "hill-warning";
-    warning.className = "form-text text-danger mt-1";
-    hillOptions.appendChild(warning);
-  }
-
-  warning.textContent =
-    len < 6 && hillSizeSelect.value === "3"
-      ? "Parola este prea scurtă pentru criptare 3x3. Minim 6 litere necesare."
-      : "";
 }
 
-export function generateHillMatrix(size) {
-  const hillMatrixContainer = document.getElementById("hill-matrix-container");
-  if (!hillMatrixContainer) return;
-
-  hillMatrixContainer.innerHTML = "";
-
-  const table = document.createElement("table");
-  table.classList.add("table", "table-bordered", "text-center");
-
+// 🔢 Generează matricea Hill
+function buildMatrixFromInputs(size, container) {
+  const matrix = [];
   for (let i = 0; i < size; i++) {
-    const row = document.createElement("tr");
+    matrix[i] = [];
     for (let j = 0; j < size; j++) {
-      const cell = document.createElement("td");
-      const input = document.createElement("input");
-      input.type = "number";
-      input.name = `hill[${i}][${j}]`;
-      input.classList.add("form-control");
-      input.required = true;
-      cell.appendChild(input);
-      row.appendChild(cell);
+      const input = container.querySelector(
+        `[data-row="${i}"][data-col="${j}"]`
+      );
+      matrix[i][j] = parseInt(input?.value) || 0;
     }
-    table.appendChild(row);
+  }
+  return matrix;
+}
+
+// 🧮 Generează inputurile pentru matricea Hill și salvează JSON-ul în input hidden
+export function generateHillMatrix(size) {
+  const container = document.getElementById("hill-matrix-container");
+  const warning = document.getElementById("hill-warning");
+  const hiddenInput = document.getElementById("hill-matrix");
+  const submitButton = document.querySelector("button[type='submit']");
+
+  if (!container || !hiddenInput || !submitButton) return;
+
+  let html = '<div class="d-flex flex-column gap-2">';
+  for (let i = 0; i < size; i++) {
+    html += '<div class="d-flex gap-2">';
+    for (let j = 0; j < size; j++) {
+      html += `<input
+        type="number"
+        class="form-control text-center hill-cell"
+        data-row="${i}" data-col="${j}"
+        min="0" max="25" required
+      />`;
+    }
+    html += "</div>";
+  }
+  html += "</div>";
+  container.innerHTML = html;
+
+  const inputs = container.querySelectorAll(".hill-cell");
+
+  function updateMatrixAndValidate() {
+    const matrix = buildMatrixFromInputs(size, container);
+    hiddenInput.value = JSON.stringify(matrix);
+
+    const valid = isHillMatrixValid(matrix);
+    warning.classList.toggle("d-none", valid);
+    warning.textContent = valid
+      ? ""
+      : "Matricea Hill este invalidă. Determinantul nu are invers modular în Z26.";
+
+    // Blochează butonul de submit dacă matricea este invalidă
+    submitButton.disabled = !valid;
   }
 
-  hillMatrixContainer.appendChild(table);
+  inputs.forEach((input) =>
+    input.addEventListener("input", updateMatrixAndValidate)
+  );
+
+  updateMatrixAndValidate(); // inițializare
 }
+
+// 🔢 GCD – cel mai mare divizor comun
+export function gcd(a, b) {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  while (b !== 0) {
+    [a, b] = [b, a % b];
+  }
+  return a;
+}
+
+// 🔁 Modulo pozitiv universal
+export function modN(n, m) {
+  return ((n % m) + m) % m;
+}
+
+// 🧮 Determinant recursiv pentru matrice pătratică
+export function determinant(matrix) {
+  const n = matrix.length;
+  if (n === 1) return matrix[0][0];
+  if (n === 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+
+  let det = 0;
+  for (let col = 0; col < n; col++) {
+    const sub = matrix.slice(1).map((row) => row.filter((_, j) => j !== col));
+    det += (col % 2 === 0 ? 1 : -1) * matrix[0][col] * determinant(sub);
+  }
+  return det;
+}
+
+// ✅ Verifică dacă determinantul are invers modular în Z26
+export function isHillMatrixValid(matrix) {
+  const det = modN(determinant(matrix), 26);
+  return gcd(det, 26) === 1;
+}
+
+// -------------------------------------------------

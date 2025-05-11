@@ -1,8 +1,4 @@
-// Funcție pentru calculul GCD (cel mai mare divizor comun)
-function gcd(a, b) {
-  while (b !== 0n) [a, b] = [b, a % b];
-  return a;
-}
+import { isHillMatrixValid } from "../crypto-methods/hill.js";
 
 // ✅ Obține datele necesare criptării în funcție de metodă
 export function getEncryptionData(
@@ -18,8 +14,17 @@ export function getEncryptionData(
   let symKey = null;
 
   if (method === "hill") {
-    encryptionKey = JSON.stringify(hill);
-    hillMatrix = hill;
+    const matrix = JSON.parse(hill);
+    if (!matrix || matrix.length !== matrix[0].length) {
+      throw new Error("Matricea Hill trebuie să fie pătratică.");
+    }
+    encryptionKey = JSON.stringify(matrix);
+    hillMatrix = matrix;
+    if (!isHillMatrixValid(matrix)) {
+      throw new Error(
+        "Matricea Hill este invalidă. Determinantul nu are invers modular în Z26."
+      );
+    }
   }
 
   if (method === "ecb" || method === "cbc") {
@@ -88,4 +93,65 @@ export function buildExtraParams(method, encryptionKey) {
   }
 
   return extra;
+}
+
+export function gcd(a, b) {
+  // Convertim ambele la același tip
+  const isBigInt = typeof a === "bigint" || typeof b === "bigint";
+  if (isBigInt) {
+    a = BigInt(a < 0 ? -a : a);
+    b = BigInt(b < 0 ? -b : b);
+    while (b !== 0n) {
+      [a, b] = [b, a % b];
+    }
+    return a;
+  } else {
+    a = Math.abs(a);
+    b = Math.abs(b);
+    while (b !== 0) {
+      [a, b] = [b, a % b];
+    }
+    return a;
+  }
+}
+
+export function modInverse(a, m) {
+  const isBigInt = typeof a === "bigint" || typeof m === "bigint";
+  if (isBigInt) {
+    a = BigInt(a);
+    m = BigInt(m);
+    let [x0, x1] = [0n, 1n];
+    while (a > 1n) {
+      const q = a / m;
+      [a, m] = [m, a % m];
+      [x0, x1] = [x1 - q * x0, x0];
+    }
+    return x1 < 0n ? x1 + m : x1;
+  } else {
+    for (let x = 1; x < m; x++) {
+      if ((a * x) % m === 1) return x;
+    }
+    throw new Error(`Invers modular inexistent pentru a = ${a}, modulo ${m}`);
+  }
+}
+
+// Modulo pozitiv universal
+export function modN(n, modulo) {
+  return ((n % modulo) + modulo) % modulo;
+}
+
+// Determinant recursiv (doar pentru matrici pătratice mici)
+export function determinant(matrix) {
+  const n = matrix.length;
+  if (n === 1) return matrix[0][0];
+  if (n === 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+
+  let det = 0;
+  for (let col = 0; col < n; col++) {
+    const subMatrix = matrix
+      .slice(1)
+      .map((row) => row.filter((_, j) => j !== col));
+    det += (col % 2 === 0 ? 1 : -1) * matrix[0][col] * determinant(subMatrix);
+  }
+  return det;
 }

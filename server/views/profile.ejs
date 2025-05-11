@@ -41,6 +41,8 @@
     <label for="change-method" class="form-label mt-3">Noua metodă de criptare</label>
     <select class="form-select" id="change-method" name="method" required>
       <%- include('partials/encryption-methods') %>
+      <input type="hidden" id="hill-matrix" name="hill" />
+
     </select>
 
     <%- include('partials/method-options') %>

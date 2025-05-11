@@ -1,12 +1,4 @@
-const mod26 = (n) => ((n % 26) + 26) % 26;
-
-// Funcție pentru invers modular (folosit la decriptare)
-function modInverse(a, m) {
-  for (let x = 1; x < m; x++) {
-    if ((a * x) % m === 1) return x;
-  }
-  throw new Error("Invers modular inexistent pentru cheia dată.");
-}
+import { modN, modInverse } from "../utils/utils.js";
 
 // Criptare cu cifrul Afin: C = (a * P + b) mod 26
 export function encrypt(text, a, b) {
@@ -14,8 +6,8 @@ export function encrypt(text, a, b) {
   return text
     .split("")
     .map((char) => {
-      let p = char.charCodeAt(0) - 65;
-      let c = mod26(a * p + b);
+      const p = char.charCodeAt(0) - 65;
+      const c = modN(a * p + b, 26);
       return String.fromCharCode(c + 65);
     })
     .join("");
@@ -29,8 +21,8 @@ export function decrypt(text, a, b) {
     .replace(/[^A-Z]/g, "")
     .split("")
     .map((char) => {
-      let c = char.charCodeAt(0) - 65;
-      let p = mod26(a_inv * (c - b));
+      const c = char.charCodeAt(0) - 65;
+      const p = modN(a_inv * (c - b), 26);
       return String.fromCharCode(p + 65);
     })
     .join("");

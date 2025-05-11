@@ -1,22 +1,4 @@
-// Calculează inversul modular al lui e mod phi folosind algoritmul extins Euclid
-function modInverse(e, phi) {
-  let [a, b] = [e, phi];
-  let [x0, x1] = [0n, 1n];
-  while (a > 1n) {
-    const q = a / b;
-    [a, b] = [b, a % b];
-    [x0, x1] = [x1 - q * x0, x0];
-  }
-  return x1 < 0n ? x1 + phi : x1;
-}
-
-// Calculează cel mai mare divizor comun
-function gcd(a, b) {
-  while (b !== 0n) {
-    [a, b] = [b, a % b];
-  }
-  return a;
-}
+import { gcd, modInverse } from "../utils/utils.js";
 
 // Verifică dacă un număr este prim simplu (pentru validare p, q)
 function isPrime(n) {
@@ -29,7 +11,7 @@ function isPrime(n) {
   return true;
 }
 
-// Funcția de criptare RSA
+// 🔐 Criptare RSA
 export function encrypt(text, params = { p: 61, q: 53, e: 17 }) {
   const p = BigInt(params.p);
   const q = BigInt(params.q);
@@ -51,7 +33,7 @@ export function encrypt(text, params = { p: 61, q: 53, e: 17 }) {
     .join(",");
 }
 
-// Funcția de decriptare RSA
+// 🔓 Decriptare RSA
 export function decrypt(ciphertext, params = { p: 61, q: 53, e: 17 }) {
   const p = BigInt(params.p);
   const q = BigInt(params.q);
@@ -64,13 +46,12 @@ export function decrypt(ciphertext, params = { p: 61, q: 53, e: 17 }) {
   const n = p * q;
   const phi = (p - 1n) * (q - 1n);
 
-  if (gcd(e, phi) !== 1n) {
+  if (gcdBig(e, phi) !== 1n) {
     throw new Error(`Exponentul public e (${e}) nu este prim cu φ(n) = ${phi}`);
   }
 
   const d = modInverse(e, phi); // cheia privată
 
-  // Decriptare caracter cu caracter
   return ciphertext
     .split(",")
     .map((c) => {

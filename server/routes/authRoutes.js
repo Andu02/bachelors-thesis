@@ -3,17 +3,20 @@ import jwt from "jsonwebtoken";
 import pool from "../db.js";
 import { encryptPassword, comparePasswords } from "../utils/cryptoRouter.js";
 import { getEncryptionData } from "../utils/utils.js";
-import { validateRegisterFields } from "../middlewares/validateInput.js";
+import {
+  validateRegisterFields,
+  getPasswordErrorMessage,
+} from "../middlewares/validateInput.js";
 
 const router = express.Router();
 const JWT_SECRET = "secretKey";
 
-// Ruta GET /register
+// GET /register
 router.get("/register", (req, res) => {
   res.render("register", { message: null });
 });
 
-// Ruta POST /register
+// POST /register
 router.post("/register", validateRegisterFields, async (req, res) => {
   const {
     username,
@@ -43,6 +46,12 @@ router.post("/register", validateRegisterFields, async (req, res) => {
         b: parseInt(affineB),
       }
     );
+
+    // Validare suplimentară dacă getPasswordErrorMessage() e necesară aici (ex: pentru fallback JS dezactivat)
+    const passwordError = getPasswordErrorMessage(password, method);
+    if (passwordError) {
+      return res.render("register", { message: passwordError });
+    }
 
     const start = Date.now();
     const encryptedPassword = await encryptPassword(method, password, {
@@ -88,12 +97,12 @@ router.post("/register", validateRegisterFields, async (req, res) => {
   }
 });
 
-// GET login
+// GET /login
 router.get("/login", (req, res) => {
   res.render("login", { message: null });
 });
 
-// POST login
+// POST /login
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -107,7 +116,6 @@ router.post("/login", async (req, res) => {
 
     const user = result.rows[0];
 
-    // 🔐 Construire parametri extra pentru comparație
     let extra = {};
     if (user.method === "rsa") {
       const { p, q, e } = JSON.parse(user.encryption_key);

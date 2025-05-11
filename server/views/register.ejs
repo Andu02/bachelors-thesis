@@ -32,6 +32,8 @@
       <label for="register-method" class="form-label">Metodă de criptare</label>
       <select class="form-select" id="register-method" name="method" required>
         <%- include('partials/encryption-methods') %>
+        <input type="hidden" id="hill-matrix" name="hill" />
+
       </select>
     </div>
 

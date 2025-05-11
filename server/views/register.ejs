@@ -16,7 +16,7 @@
     <div class="mb-3">
       <label for="password" class="form-label">Parolă</label>
       <input
-        type="text"
+        type="password"
         class="form-control"
         id="password"
         name="password"
@@ -29,8 +29,8 @@
     </div>
 
     <div class="mb-3">
-      <label for="method" class="form-label">Metodă de criptare</label>
-      <select class="form-select" id="method" name="method" required>
+      <label for="register-method" class="form-label">Metodă de criptare</label>
+      <select class="form-select" id="register-method" name="method" required>
         <%- include('partials/encryption-methods') %>
       </select>
     </div>
@@ -40,5 +40,6 @@
     <button type="submit" class="btn btn-primary w-100">Creează cont</button>
   </form>
 </div>
+
 <script type="module" src="/js/method-options.js"></script>
 <%- include('partials/footer') %>

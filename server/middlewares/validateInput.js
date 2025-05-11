@@ -6,12 +6,22 @@ function validateUsername(username) {
   );
 }
 
-function validatePassword(password) {
-  return (
-    typeof password === "string" &&
-    password.length >= 6 &&
-    password.length <= 30
-  );
+function validatePasswordByMethod(password, method) {
+  if (method === "caesar" || method === "vigenere" || method === "hill") {
+    return /^[a-zA-Z]+$/.test(password);
+  }
+
+  const strongPasswordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+  return strongPasswordRegex.test(password);
+}
+
+function getPasswordErrorMessage(password, method) {
+  if (!validatePasswordByMethod(password, method)) {
+    return method === "caesar" || method === "vigenere" || method === "hill"
+      ? "Parola trebuie să conțină doar litere."
+      : "Parola trebuie să aibă minim 8 caractere, o literă mare, o cifră și un caracter special.";
+  }
+  return null;
 }
 
 export function validateRegisterFields(req, res, next) {
@@ -23,28 +33,26 @@ export function validateRegisterFields(req, res, next) {
     });
   }
 
-  if (!validatePassword(password)) {
-    return res.render("register", {
-      message: "Parola trebuie să aibă între 6 și 30 de caractere.",
-    });
-  }
-
   if (!method || method === "") {
     return res.render("register", {
       message: "Te rugăm să alegi o metodă de criptare.",
     });
   }
 
+  const errorMessage = getPasswordErrorMessage(password, method);
+  if (errorMessage) {
+    return res.render("register", { message: errorMessage });
+  }
+
   next();
 }
 
 export function validateNewPassword(req, res, next) {
-  const { newPassword } = req.body;
+  const { newPassword, method } = req.body;
 
-  if (!validatePassword(newPassword)) {
-    return res.status(400).json({
-      message: "Parola nouă trebuie să aibă între 6 și 30 de caractere.",
-    });
+  const errorMessage = getPasswordErrorMessage(newPassword, method);
+  if (errorMessage) {
+    return res.status(400).json({ message: errorMessage });
   }
 
   next();

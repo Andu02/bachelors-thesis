@@ -8,11 +8,16 @@
   <option value="transposition">Cifrul de Transpoziție</option>
   <option value="permutation">Cifrul de Permutare</option>
 </optgroup>
-<optgroup label="Criptare modernă">
-  <option value="rsa">RSA</option>
-  <option value="bcrypt">Bcrypt (hash + salt)</option>
+
+<optgroup label="Criptare asimetrică">
+  <option value="rsa">RSA (cheie publică/privată)</option>
 </optgroup>
-<optgroup label="Cifruri pe blocuri (simulare)">
-  <option value="ecb">ECB</option>
-  <option value="cbc">CBC</option>
+
+<optgroup label="Cifruri moderne pe blocuri (AES)">
+  <option value="ecb">AES - ECB (Electronic Codebook)</option>
+  <option value="cbc">AES - CBC (Cipher Block Chaining)</option>
+</optgroup>
+
+<optgroup label="Funcții de hashing">
+  <option value="bcrypt">Bcrypt (hash + salt)</option>
 </optgroup>

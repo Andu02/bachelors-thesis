@@ -4,96 +4,124 @@ import {
   generateHillMatrix,
 } from "./utils.js";
 
-const methodSelect = document.getElementById("method");
+const methodSelect = document.querySelector("select[name='method']");
 const passwordInput = document.getElementById("password");
-
-// Caesar
-const caesarKeyGroup = document.getElementById("caesar-key-group");
-const caesarKeyInput = document.getElementById("caesar-key");
-
-// Affine
-const affineOptions = document.getElementById("affine-options");
-const affineA = document.getElementById("affine-a");
-const affineB = document.getElementById("affine-b");
-const affineWarning = document.getElementById("affine-warning");
-
-// Hill
-const hillOptions = document.getElementById("hill-options");
 const hillSizeSelect = document.getElementById("hill-size");
-const hillMatrixContainer = document.getElementById("hill-matrix-container");
+const rsaInputs = document.querySelectorAll("#rsa-options input");
 
-// ECB / CBC
-const symmetricKeyGroup = document.getElementById("symmetric-key-group");
+const methodConfig = {
+  caesar: {
+    show: ["caesar-key-group"],
+    enable: ["caesar-key"],
+  },
+  affine: {
+    show: ["affine-options"],
+    enable: ["affine-a", "affine-b"],
+    clearWarning: "affine-warning",
+  },
+  hill: {
+    show: ["hill-options"],
+    custom: () => {
+      adjustHillOptions();
+      const size = parseInt(hillSizeSelect?.value);
+      if (!isNaN(size)) generateHillMatrix(size);
+    },
+  },
+  ecb: {
+    show: ["symmetric-key-group"],
+    enable: ["symmetric-key"],
+  },
+  cbc: {
+    show: ["symmetric-key-group"],
+    enable: ["symmetric-key"],
+  },
+  rsa: {
+    show: ["rsa-options"],
+    enable: Array.from(rsaInputs).map((input) => input.id),
+    clearWarning: "rsa-warning",
+  },
+};
 
-// RSA
-const rsaOptions = document.getElementById("rsa-options");
-const rsaInputs = rsaOptions ? rsaOptions.querySelectorAll("input") : [];
-const rsaWarning = document.getElementById("rsa-warning");
+function handleMethodChange(method) {
+  // Dacă metoda este invalidă sau nealeasă, ascunde și dezactivează tot
+  if (!methodConfig[method]) {
+    Object.values(methodConfig).forEach((config) => {
+      config.show?.forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) element.style.display = "none";
+      });
+      config.enable?.forEach((id) => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.removeAttribute("required");
+          element.setAttribute("disabled", "true");
+        }
+      });
+    });
+    return;
+  }
 
+  // Ascunde și dezactivează toate opțiunile
+  Object.values(methodConfig).forEach((config) => {
+    config.show?.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) element.style.display = "none";
+    });
+    config.enable?.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.removeAttribute("required");
+        element.setAttribute("disabled", "true");
+      }
+    });
+  });
+
+  // Afișează și activează opțiunile pentru metoda curentă
+  const current = methodConfig[method];
+
+  current.show?.forEach((id) => {
+    const element = document.getElementById(id);
+    if (element) element.style.display = "block";
+  });
+
+  current.enable?.forEach((id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.removeAttribute("disabled");
+      element.setAttribute("required", "true");
+    }
+  });
+
+  if (current.clearWarning) {
+    const warningElement = document.getElementById(current.clearWarning);
+    if (warningElement) {
+      warningElement.classList.add("d-none");
+      warningElement.textContent = "";
+    }
+  }
+
+  if (typeof current.custom === "function") {
+    current.custom();
+  }
+}
+
+// Schimbare de metodă selectată
 methodSelect?.addEventListener("change", () => {
   const method = methodSelect.value;
   updatePasswordPattern(method);
+  handleMethodChange(method);
+});
 
-  // Caesar
-  if (caesarKeyGroup && caesarKeyInput) {
-    if (method === "caesar") {
-      caesarKeyGroup.style.display = "block";
-      caesarKeyInput.removeAttribute("disabled");
-      caesarKeyInput.setAttribute("required", "true");
-    } else {
-      caesarKeyGroup.style.display = "none";
-      caesarKeyInput.removeAttribute("required");
-      caesarKeyInput.setAttribute("disabled", "true");
-    }
-  }
-
-  // Affine
-  if (affineOptions && affineWarning) {
-    if (method === "affine") {
-      affineOptions.style.display = "block";
-    } else {
-      affineOptions.style.display = "none";
-      affineWarning.classList?.add("d-none");
-      affineWarning.textContent = "";
-    }
-  }
-
-  // Hill
-  if (hillOptions && hillMatrixContainer && hillSizeSelect) {
-    if (method === "hill") {
-      hillOptions.style.display = "block";
-      adjustHillOptions();
-      generateHillMatrix(parseInt(hillSizeSelect.value));
-    } else {
-      hillOptions.style.display = "none";
-      hillMatrixContainer.innerHTML = "";
-    }
-  }
-
-  // ECB / CBC
-  if (symmetricKeyGroup) {
-    symmetricKeyGroup.style.display =
-      method === "ecb" || method === "cbc" ? "block" : "none";
-  }
-
-  // RSA
-  if (rsaOptions && rsaInputs && rsaWarning) {
-    if (method === "rsa") {
-      rsaOptions.style.display = "block";
-      rsaInputs.forEach((input) => {
-        input.removeAttribute("disabled");
-        input.setAttribute("required", "true");
-      });
-    } else {
-      rsaOptions.style.display = "none";
-      rsaWarning.classList?.add("d-none");
-      rsaInputs.forEach((input) => {
-        input.removeAttribute("required");
-        input.setAttribute("disabled", "true");
-      });
-    }
+// Inițializare la încărcare
+document.addEventListener("DOMContentLoaded", () => {
+  const method = methodSelect?.value;
+  if (method && methodConfig[method]) {
+    updatePasswordPattern(method);
+    handleMethodChange(method);
+  } else {
+    handleMethodChange(""); // forțăm ascunderea totală dacă nu e selectată metoda
   }
 });
 
-// 🔁 Monitorizează modificările în parolă pentru criptare Hill
+// Actualizare dinamică pentru cifrul Hill
 passwordInput?.addEventListener("input", adjustHillOptions);

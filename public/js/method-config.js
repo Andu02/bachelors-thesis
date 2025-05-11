@@ -35,5 +35,9 @@ export function getMethodConfig(
       enable: Array.from(rsaInputs).map((input) => input.id),
       clearWarning: "rsa-warning",
     },
+    bcrypt: {
+      show: ["bcrypt-options"],
+      enable: ["bcrypt-salt"],
+    },
   };
 }

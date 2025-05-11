@@ -29,7 +29,10 @@ const encryptionMethods = {
   transposition: (password) => transpositionEncrypt(password),
   permutation: (password) => permutationEncrypt(password),
   rsa: (password, extra) => rsaEncrypt(password, extra.rsa),
-  bcrypt: async (password) => await bcryptEncrypt(password),
+  bcrypt: async (password, extra) => {
+    const rounds = parseInt(extra.bcryptSalt) || 10;
+    return await bcryptEncrypt(password, rounds);
+  },
   ecb: (password, extra) =>
     ecbEncrypt(password, extra.symmetricKey || DEFAULT_SYMMETRIC_KEY),
   cbc: (password, extra) =>

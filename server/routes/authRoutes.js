@@ -28,7 +28,12 @@ router.post("/register", validateRegisterFields, async (req, res) => {
     rsa,
     affineA,
     affineB,
+    bcryptSalt,
   } = req.body;
+
+  // 🟡 DEBUG: Verificăm ce vine din frontend
+  console.log(">>> metoda selectată:", method);
+  console.log(">>> bcryptSalt primit:", bcryptSalt);
 
   try {
     const {
@@ -44,7 +49,8 @@ router.post("/register", validateRegisterFields, async (req, res) => {
       {
         a: parseInt(affineA),
         b: parseInt(affineB),
-      }
+      },
+      parseInt(bcryptSalt)
     );
 
     const passwordError = getPasswordErrorMessage(password, method);
@@ -59,6 +65,7 @@ router.post("/register", validateRegisterFields, async (req, res) => {
       rsa,
       caesarKey: parseInt(caesarKey),
       affine: { a: parseInt(affineA), b: parseInt(affineB) },
+      bcryptSalt: parseInt(bcryptSalt),
     });
     const encryptionTime = Date.now() - start;
 

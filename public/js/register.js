@@ -12,8 +12,16 @@ document
     const username = form.username.value;
     const password = form.password.value;
 
-    const { method, caesarKey, hill, symmetricKey, rsa, affineA, affineB } =
-      collectCryptoParams("register-form");
+    const {
+      method,
+      caesarKey,
+      hill,
+      symmetricKey,
+      rsa,
+      affineA,
+      affineB,
+      bcryptSalt, // ✅ acum inclus corect
+    } = collectCryptoParams("register-form");
 
     try {
       const response = await fetch("/register", {
@@ -29,6 +37,7 @@ document
           rsa,
           affineA,
           affineB,
+          bcryptSalt, // ✅ trimis corect
         }),
       });
 

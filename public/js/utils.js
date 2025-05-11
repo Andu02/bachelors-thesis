@@ -60,6 +60,10 @@ export function collectCryptoParams(formId) {
   const affineA = form.querySelector("#affine-a")?.value;
   const affineB = form.querySelector("#affine-b")?.value;
 
+  // 🔐 Bcrypt
+  const bcryptSaltInput = form.querySelector("#bcrypt-salt");
+  const bcryptSalt = bcryptSaltInput ? parseInt(bcryptSaltInput.value) : null;
+
   return {
     method,
     caesarKey,
@@ -68,6 +72,7 @@ export function collectCryptoParams(formId) {
     rsa,
     affineA: affineA ? parseInt(affineA) : null,
     affineB: affineB ? parseInt(affineB) : null,
+    bcryptSalt,
   };
 }
 

@@ -7,7 +7,8 @@ export function getEncryptionData(
   symmetricKey,
   rsa = {},
   caesarKey = null,
-  affine = {}
+  affine = {},
+  bcryptSalt = null
 ) {
   let encryptionKey = null;
   let hillMatrix = null;
@@ -59,6 +60,13 @@ export function getEncryptionData(
       throw new Error("Cifra Afin necesită a prim cu 26 și b valid.");
     }
     encryptionKey = JSON.stringify({ a, b });
+  }
+
+  if (method === "bcrypt") {
+    if (!bcryptSalt || isNaN(bcryptSalt) || bcryptSalt < 4 || bcryptSalt > 15) {
+      throw new Error("Salt-ul Bcrypt trebuie să fie un număr între 4 și 15.");
+    }
+    encryptionKey = bcryptSalt.toString();
   }
 
   return { encryptionKey, hillMatrix, symmetricKey: symKey };

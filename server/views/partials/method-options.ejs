@@ -53,3 +53,13 @@
   <input type="number" class="form-control mb-2" id="rsa-e" name="rsaE" placeholder="e" />
   <div id="rsa-warning" class="form-text text-danger d-none"></div>
 </div>
+
+<!-- Bcrypt -->
+<div id="bcrypt-options" class="mb-3" style="display: none;">
+  <label for="bcrypt-salt" class="form-label">Număr pași salt (rounds)</label>
+  <select class="form-select" id="bcrypt-salt" name="bcryptSalt" required>
+    <% for (let i = 4; i <= 14; i++) { %>
+      <option value="<%= i %>"><%= i %></option>
+    <% } %>
+  </select>
+</div>

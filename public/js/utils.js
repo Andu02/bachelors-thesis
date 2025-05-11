@@ -25,6 +25,52 @@ export function updatePasswordPattern(method) {
   }
 }
 
+export function collectCryptoParams(formId) {
+  const form = document.getElementById(formId);
+  const method = form.querySelector("select[name='method']")?.value;
+
+  // 🔐 Caesar
+  const caesarKeyInput = form.querySelector("#caesar-key");
+  const caesarKey = caesarKeyInput ? parseInt(caesarKeyInput.value) : null;
+
+  // 🔐 Hill
+  const hillInputs = form.querySelectorAll("#hill-matrix-container input");
+  const hill = {};
+  hillInputs.forEach((input) => {
+    const match = input.name.match(/hill\[(\d+)]\[(\d+)]/);
+    if (match) {
+      const i = match[1],
+        j = match[2];
+      if (!hill[i]) hill[i] = {};
+      hill[i][j] = input.value;
+    }
+  });
+
+  // 🔐 ECB / CBC
+  const symmetricKeyInput = form.querySelector("#symmetric-key");
+  const symmetricKey = symmetricKeyInput ? symmetricKeyInput.value : null;
+
+  // 🔐 RSA
+  const rsaP = form.querySelector("#rsa-p")?.value;
+  const rsaQ = form.querySelector("#rsa-q")?.value;
+  const rsaE = form.querySelector("#rsa-e")?.value;
+  const rsa = rsaP && rsaQ && rsaE ? { p: rsaP, q: rsaQ, e: rsaE } : null;
+
+  // 🔐 Affine
+  const affineA = form.querySelector("#affine-a")?.value;
+  const affineB = form.querySelector("#affine-b")?.value;
+
+  return {
+    method,
+    caesarKey,
+    hill,
+    symmetricKey,
+    rsa,
+    affineA: affineA ? parseInt(affineA) : null,
+    affineB: affineB ? parseInt(affineB) : null,
+  };
+}
+
 // Hill ------------------------------------------
 
 // 🔄 Ajustează opțiunile pentru Hill în funcție de lungimea parolei

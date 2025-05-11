@@ -3,14 +3,18 @@
 <div class="card shadow p-4" style="width: 100%; max-width: 450px;">
   <h2 class="text-center mb-4">Creare cont nou</h2>
 
-  <% if (message) { %>
-    <div class="alert alert-danger text-center"><%= message %></div>
-  <% } %>
-
-  <form id="register-form" action="/register" method="POST" autocomplete="off">
+  <form id="register-form" autocomplete="off">
     <div class="mb-3">
       <label for="username" class="form-label">Nume utilizator</label>
-      <input type="text" class="form-control" id="username" name="username" required minlength="3" maxlength="20" />
+      <input
+        type="text"
+        class="form-control"
+        id="username"
+        name="username"
+        required
+        minlength="3"
+        maxlength="20"
+      />
     </div>
 
     <div class="mb-3">
@@ -33,7 +37,6 @@
       <select class="form-select" id="register-method" name="method" required>
         <%- include('partials/encryption-methods') %>
         <input type="hidden" id="hill-matrix" name="hill" />
-
       </select>
     </div>
 
@@ -41,7 +44,12 @@
 
     <button type="submit" class="btn btn-primary w-100">Creează cont</button>
   </form>
+
+  <!-- 🔔 mesaj dinamic afișat de register.js -->
+  <div id="register-message" class="alert d-none mt-3 text-center"></div>
 </div>
 
 <script type="module" src="/js/method-options.js"></script>
+<script type="module" src="/js/register.js"></script>
+
 <%- include('partials/footer') %>

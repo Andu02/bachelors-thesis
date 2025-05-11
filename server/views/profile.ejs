@@ -3,17 +3,15 @@
 <div class="card shadow p-4" style="width: 100%; max-width: 450px;">
   <h2 class="text-center mb-4">Profilul utilizatorului</h2>
 
-  <% if (message) { %>
-    <div class="alert alert-info"><%= message %></div>
-  <% } %>
-
   <p><strong>Nume utilizator:</strong> <%= user.username %></p>
 
+  <!-- Buton pentru afișare formular -->
   <button id="toggle-button" class="btn btn-outline-primary w-100 mb-3" onclick="toggleForm()">
     Schimbă parola
   </button>
 
-  <form id="change-password-form" class="d-none">
+  <!-- Formular schimbare parolă -->
+  <form id="change-password-form" class="d-none" autocomplete="off">
     <label for="old-password" class="form-label">Parola veche</label>
     <input
       type="password"
@@ -42,7 +40,6 @@
     <select class="form-select" id="change-method" name="method" required>
       <%- include('partials/encryption-methods') %>
       <input type="hidden" id="hill-matrix" name="hill" />
-
     </select>
 
     <%- include('partials/method-options') %>
@@ -50,10 +47,10 @@
     <button type="submit" class="btn btn-warning w-100 mt-3">Schimbă parola</button>
   </form>
 
-  <div id="change-password-message" class="alert d-none mt-3"></div>
-
-  <script type="module" src="/js/change-password.js"></script>
-  <script type="module" src="/js/method-options.js"></script>
+  <!-- Mesaj dinamic de status -->
+  <div id="change-password-message" class="alert d-none mt-3 text-center"></div>
 </div>
 
+<script type="module" src="/js/change-password.js"></script>
+<script type="module" src="/js/method-options.js"></script>
 <%- include('partials/footer') %>

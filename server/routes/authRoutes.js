@@ -16,7 +16,7 @@ router.get("/register", (req, res) => {
   res.render("register", { message: null });
 });
 
-// POST /register
+// ✅ POST /register - răspunde cu JSON pentru fetch()
 router.post("/register", validateRegisterFields, async (req, res) => {
   const {
     username,
@@ -47,10 +47,9 @@ router.post("/register", validateRegisterFields, async (req, res) => {
       }
     );
 
-    // Validare suplimentară dacă getPasswordErrorMessage() e necesară aici (ex: pentru fallback JS dezactivat)
     const passwordError = getPasswordErrorMessage(password, method);
     if (passwordError) {
-      return res.render("register", { message: passwordError });
+      return res.status(400).json({ message: passwordError });
     }
 
     const start = Date.now();
@@ -83,17 +82,17 @@ router.post("/register", validateRegisterFields, async (req, res) => {
       { httpOnly: false, maxAge: 3600000 }
     );
 
-    res.redirect("/success-register");
+    return res.status(200).json({ message: "Cont creat cu succes!" });
   } catch (err) {
     if (err.code === "23505") {
-      return res.render("register", {
-        message: "Acest nume de utilizator este deja folosit.",
-      });
+      return res
+        .status(400)
+        .json({ message: "Acest nume de utilizator este deja folosit." });
     }
     console.error("Eroare la înregistrare:", err);
-    res
+    return res
       .status(500)
-      .render("register", { message: "Eroare la salvare în baza de date." });
+      .json({ message: "Eroare internă la salvarea contului." });
   }
 });
 
@@ -102,7 +101,7 @@ router.get("/login", (req, res) => {
   res.render("login", { message: null });
 });
 
-// POST /login
+// POST /login (rămâne pe render clasic dacă nu trecem și el pe fetch)
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -110,21 +109,40 @@ router.post("/login", async (req, res) => {
     const result = await pool.query("SELECT * FROM users WHERE username = $1", [
       username,
     ]);
+
     if (result.rows.length === 0) {
       return res.render("login", { message: "Utilizatorul nu există." });
     }
 
     const user = result.rows[0];
-
     let extra = {};
-    if (user.method === "rsa") {
-      const { p, q, e } = JSON.parse(user.encryption_key);
-      extra.rsa = { p: BigInt(p), q: BigInt(q), e: BigInt(e) };
-    } else if (user.method === "affine") {
-      const { a, b } = JSON.parse(user.encryption_key);
-      extra.affine = { a: parseInt(a), b: parseInt(b) };
-    } else {
-      extra = getEncryptionData(user.method, null, null, null);
+
+    switch (user.method) {
+      case "rsa":
+        const { p, q, e } = JSON.parse(user.encryption_key);
+        extra.rsa = { p: BigInt(p), q: BigInt(q), e: BigInt(e) };
+        break;
+
+      case "affine":
+        const { a, b } = JSON.parse(user.encryption_key);
+        extra.affine = { a: parseInt(a), b: parseInt(b) };
+        break;
+
+      case "caesar":
+        extra.caesarKey = parseInt(user.encryption_key);
+        break;
+
+      case "hill":
+        extra.hillKey = JSON.parse(user.encryption_key);
+        break;
+
+      case "ecb":
+      case "cbc":
+        extra.symmetricKey = user.encryption_key;
+        break;
+
+      default:
+        break;
     }
 
     const valid = await comparePasswords(

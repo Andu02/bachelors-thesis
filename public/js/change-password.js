@@ -1,4 +1,7 @@
-function toggleForm() {
+import { collectCryptoParams } from "./utils.js";
+
+// ✅ toggleForm pentru butonul de afișare formular
+window.toggleForm = function () {
   const form = document.getElementById("change-password-form");
   const button = document.getElementById("toggle-button");
   const isHidden = form.classList.contains("d-none");
@@ -6,56 +9,29 @@ function toggleForm() {
   button.textContent = isHidden
     ? "Anulează schimbarea parolei"
     : "Schimbă parola";
-}
+};
 
 document
   .getElementById("change-password-form")
   .addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    const oldPassword = document.getElementById("old-password").value;
-    const newPassword = document.getElementById("new-password").value;
-    const method = document.getElementById("method").value;
-
-    // Cheie simetrică (ECB/CBC)
-    const symmetricKeyInput = document.getElementById("symmetric-key");
-    const symmetricKey = symmetricKeyInput ? symmetricKeyInput.value : null;
-
-    // Matrice Hill
-    const hillInputs = document.querySelectorAll(
-      "#hill-matrix-container input"
-    );
-    const hill = {};
-    hillInputs.forEach((input) => {
-      const match = input.name.match(/hill\[(\d+)]\[(\d+)]/);
-      if (match) {
-        const i = match[1],
-          j = match[2];
-        if (!hill[i]) hill[i] = {};
-        hill[i][j] = input.value;
-      }
-    });
-
-    // RSA
-    const rsaP = document.getElementById("rsa-p")?.value;
-    const rsaQ = document.getElementById("rsa-q")?.value;
-    const rsaE = document.getElementById("rsa-e")?.value;
-    const rsa = rsaP && rsaQ && rsaE ? { p: rsaP, q: rsaQ, e: rsaE } : null;
-
-    // Affine
-    const affineA = document.getElementById("affine-a")?.value;
-    const affineB = document.getElementById("affine-b")?.value;
-
     const messageDiv = document.getElementById("change-password-message");
+    messageDiv.classList.remove("d-none", "alert-success", "alert-danger");
 
-    // ✅ Verificare: parola nouă să fie diferită
+    const form = document.getElementById("change-password-form");
+    const oldPassword = form.oldPassword.value;
+    const newPassword = form.newPassword.value;
+
     if (oldPassword === newPassword) {
-      messageDiv.classList.remove("d-none", "alert-success");
       messageDiv.classList.add("alert-danger");
       messageDiv.textContent =
         "Parola nouă nu poate fi identică cu parola veche.";
       return;
     }
+
+    const { method, caesarKey, hill, symmetricKey, rsa, affineA, affineB } =
+      collectCryptoParams("change-password-form");
 
     try {
       const response = await fetch("/change-password", {
@@ -65,25 +41,30 @@ document
           oldPassword,
           newPassword,
           method,
+          caesarKey,
           hill,
           symmetricKey,
           rsa,
+          affineA,
+          affineB,
         }),
       });
 
       const data = await response.json();
-      messageDiv.classList.remove("d-none", "alert-success", "alert-danger");
+
       messageDiv.classList.add(response.ok ? "alert-success" : "alert-danger");
       messageDiv.textContent = data.message;
 
       if (response.ok) {
-        document.getElementById("old-password").value = "";
-        document.getElementById("new-password").value = "";
-        if (symmetricKeyInput) symmetricKeyInput.value = "";
+        form.oldPassword.value = "";
+        form.newPassword.value = "";
+        setTimeout(() => {
+          messageDiv.classList.add("d-none");
+          messageDiv.textContent = "";
+        }, 6000);
       }
     } catch (err) {
-      messageDiv.classList.remove("d-none");
       messageDiv.classList.add("alert-danger");
-      messageDiv.textContent = "A apărut o eroare: " + err.message;
+      messageDiv.textContent = "Eroare: " + err.message;
     }
   });

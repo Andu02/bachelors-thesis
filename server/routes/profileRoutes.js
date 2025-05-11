@@ -38,10 +38,12 @@ router.post(
       oldPassword,
       newPassword,
       method,
+      caesarKey,
       hill,
       symmetricKey,
       rsa,
-      caesarKey,
+      affineA,
+      affineB,
     } = req.body;
 
     try {
@@ -51,6 +53,7 @@ router.post(
       );
       const user = result.rows[0];
 
+      // ✅ Verifică parola veche (criptată cu metoda veche)
       const valid = await comparePasswords(
         user.method,
         oldPassword,
@@ -63,19 +66,36 @@ router.post(
           .json({ message: "Parola veche este incorectă." });
       }
 
+      // 🔐 Obține parametrii pentru noua metodă de criptare (ca în /register)
       const {
         encryptionKey,
         hillMatrix,
         symmetricKey: symKey,
-      } = getEncryptionData(method, hill, symmetricKey, rsa, caesarKey);
+      } = getEncryptionData(
+        method,
+        hill,
+        symmetricKey,
+        rsa,
+        parseInt(caesarKey),
+        {
+          a: parseInt(affineA),
+          b: parseInt(affineB),
+        }
+      );
 
+      // 🔒 Criptează noua parolă
       const newHashed = await encryptPassword(method, newPassword, {
         hillKey: hillMatrix,
         symmetricKey: symKey,
         rsa,
         caesarKey: parseInt(caesarKey),
+        affine: {
+          a: parseInt(affineA),
+          b: parseInt(affineB),
+        },
       });
 
+      // 💾 Actualizează utilizatorul
       await pool.query(
         "UPDATE users SET password = $1, method = $2, encryption_key = $3 WHERE username = $4",
         [newHashed, method, encryptionKey, req.user.username]

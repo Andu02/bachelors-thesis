@@ -15,10 +15,17 @@ export function getEncryptionData(
   let symKey = null;
 
   if (method === "hill") {
-    const matrix = JSON.parse(hill);
-    if (!matrix || matrix.length !== matrix[0].length) {
+    const matrix = typeof hill === "string" ? JSON.parse(hill) : hill;
+
+    if (
+      !Array.isArray(matrix) ||
+      matrix.length === 0 ||
+      !Array.isArray(matrix[0]) ||
+      matrix.length !== matrix[0].length
+    ) {
       throw new Error("Matricea Hill trebuie să fie pătratică.");
     }
+
     encryptionKey = JSON.stringify(matrix);
     hillMatrix = matrix;
     if (!isHillMatrixValid(matrix)) {

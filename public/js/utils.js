@@ -33,18 +33,15 @@ export function collectCryptoParams(formId) {
   const caesarKeyInput = form.querySelector("#caesar-key");
   const caesarKey = caesarKeyInput ? parseInt(caesarKeyInput.value) : null;
 
-  // 🔐 Hill
-  const hillInputs = form.querySelectorAll("#hill-matrix-container input");
-  const hill = {};
-  hillInputs.forEach((input) => {
-    const match = input.name.match(/hill\[(\d+)]\[(\d+)]/);
-    if (match) {
-      const i = match[1],
-        j = match[2];
-      if (!hill[i]) hill[i] = {};
-      hill[i][j] = input.value;
-    }
-  });
+  // 🔐 Hill (matrice pătratică ca array de array-uri de numere)
+  const hillHiddenInput = form.querySelector("#hill-matrix");
+  let hill = [];
+
+  try {
+    hill = JSON.parse(hillHiddenInput?.value || "[]");
+  } catch {
+    hill = [];
+  }
 
   // 🔐 ECB / CBC
   const symmetricKeyInput = form.querySelector("#symmetric-key");

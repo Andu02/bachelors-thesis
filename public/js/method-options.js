@@ -107,6 +107,7 @@ function enableOptionsFor(method) {
 // 🔁 La selectarea unei metode
 methodSelect?.addEventListener("change", () => {
   const method = methodSelect.value;
+  hideAllOptions(); // 🔁 ascunde tot înainte
   updatePasswordPattern(method);
   enableOptionsFor(method);
 });

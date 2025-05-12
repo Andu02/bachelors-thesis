@@ -76,6 +76,45 @@ export function collectCryptoParams(formId) {
   };
 }
 
+export function fixAndValidateRSA({ p, q, e }) {
+  let bigP = BigInt(p);
+  let bigQ = BigInt(q);
+  const bigE = BigInt(e);
+
+  // 🛠 Înlocuiește p cu următorul prim dacă nu e valid
+  if (!isPrime(bigP)) bigP = nextPrime(bigP);
+  if (!isPrime(bigQ)) bigQ = nextPrime(bigQ);
+
+  const phi = (bigP - 1n) * (bigQ - 1n);
+  const isValid = gcd(bigE, phi) === 1n;
+
+  return {
+    p: bigP.toString(),
+    q: bigQ.toString(),
+    e: bigE.toString(),
+    phi: phi.toString(),
+    isValid,
+  };
+}
+
+function isPrime(n) {
+  if (n <= 1n) return false;
+  if (n <= 3n) return true;
+  if (n % 2n === 0n || n % 3n === 0n) return false;
+  for (let i = 5n; i * i <= n; i += 6n) {
+    if (n % i === 0n || n % (i + 2n) === 0n) return false;
+  }
+  return true;
+}
+
+function nextPrime(n) {
+  let candidate = n + 1n;
+  while (!isPrime(candidate)) {
+    candidate += 1n;
+  }
+  return candidate;
+}
+
 // Hill ------------------------------------------
 
 // 🔄 Ajustează opțiunile pentru Hill în funcție de lungimea parolei
@@ -164,12 +203,23 @@ export function generateHillMatrix(size) {
 
 // 🔢 GCD – cel mai mare divizor comun
 export function gcd(a, b) {
-  a = Math.abs(a);
-  b = Math.abs(b);
-  while (b !== 0) {
-    [a, b] = [b, a % b];
+  const isBigInt = typeof a === "bigint" || typeof b === "bigint";
+
+  if (isBigInt) {
+    a = BigInt(a < 0 ? -a : a);
+    b = BigInt(b < 0 ? -b : b);
+    while (b !== 0n) {
+      [a, b] = [b, a % b];
+    }
+    return a;
+  } else {
+    a = Math.abs(a);
+    b = Math.abs(b);
+    while (b !== 0) {
+      [a, b] = [b, a % b];
+    }
+    return a;
   }
-  return a;
 }
 
 // 🔁 Modulo pozitiv universal

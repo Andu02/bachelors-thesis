@@ -11,7 +11,6 @@ import {
   encrypt as bcryptEncrypt,
   compare as bcryptCompare,
 } from "../crypto-methods/bcrypt.js";
-import { isHillMatrixValid } from "../crypto-methods/hill.js";
 
 const DEFAULT_SYMMETRIC_KEY = "DEFAULT";
 

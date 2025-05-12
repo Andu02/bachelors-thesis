@@ -34,6 +34,14 @@ router.post(
   requireAuth,
   validateNewPassword,
   async (req, res) => {
+    // 🛑 Blocare metode nereversibile
+    const irreversibleMethods = ["bcrypt", "sha256"];
+    if (irreversibleMethods.includes(method)) {
+      return res.status(400).json({
+        success: false,
+        message: `Metoda '${method}' nu permite schimbarea parolei cu decriptare.`,
+      });
+    }
     const {
       oldPassword,
       newPassword,

@@ -30,6 +30,7 @@ function hideAllOptions() {
       const element = document.getElementById(id);
       if (element) {
         element.removeAttribute("required");
+        element.removeAttribute("name");
         element.setAttribute("disabled", "true");
       }
     });
@@ -64,6 +65,14 @@ function enableOptionsFor(method) {
 
   // Custom logic (ex: Hill, RSA)
   if (typeof config.custom === "function") {
+    // ❌ Ascunde secțiunea de decriptare pentru metode nereversibile
+    const decryptSection = document.getElementById("decrypt-section");
+    if (["bcrypt", "sha256"].includes(method)) {
+      if (decryptSection) decryptSection.classList.add("d-none");
+    } else {
+      if (decryptSection) decryptSection.classList.remove("d-none");
+    }
+
     config.custom();
   }
 

@@ -1,4 +1,5 @@
 import { collectCryptoParams } from "./utils.js";
+import { hideAllOptions } from "./method-options.js";
 
 // ✅ toggleForm pentru butonul de afișare formular
 window.toggleForm = function () {
@@ -56,8 +57,10 @@ document
       messageDiv.textContent = data.message;
 
       if (response.ok) {
-        form.oldPassword.value = "";
-        form.newPassword.value = "";
+        form.reset(); // 🔁 resetează toate câmpurile din formular
+        hideAllOptions(); // 🔁 ascunde inputurile criptografice (dacă e exportată din method-options.js)
+        toggleForm(); // 🔁 închide formularul
+
         setTimeout(() => {
           messageDiv.classList.add("d-none");
           messageDiv.textContent = "";

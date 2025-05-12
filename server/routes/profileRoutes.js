@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import pool from "../db.js";
 import { encryptPassword, comparePasswords } from "../utils/cryptoRouter.js";
 import { getEncryptionData, buildExtraParams } from "../utils/utils.js";
-import { validateNewPassword } from "../middlewares/validateInput.js";
+import { changePasswordValidator } from "../middlewares/authValidators.js";
 import { requireAuth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -37,7 +37,7 @@ router.get("/profile", requireAuth, async (req, res) => {
 router.post(
   "/change-password",
   requireAuth,
-  validateNewPassword,
+  changePasswordValidator,
   async (req, res) => {
     // ← first pull everything out of the body
     const {

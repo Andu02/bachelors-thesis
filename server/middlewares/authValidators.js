@@ -111,9 +111,91 @@ export const registerValidator = [
 ];
 
 export const changePasswordValidator = [
-  // reuse same password rules for newPassword
-  body("newPassword").custom(passwordByMethodValidator),
+  // must supply a method
+  body("method")
+    .isIn([
+      "caesar",
+      "vigenere",
+      "hill",
+      "affine",
+      "ecb",
+      "cbc",
+      "rsa",
+      "bcrypt",
+      "sha256",
+    ])
+    .withMessage("Metodă de criptare necunoscută."),
 
+  // oldPassword required
+  body("oldPassword").isString().withMessage("Parola veche este obligatorie."),
+
+  // newPassword strength per‐method
+  body("newPassword").custom((newPwd, { req }) => {
+    const m = req.body.method;
+    if (["caesar", "vigenere", "hill", "affine"].includes(m)) {
+      if (!onlyLettersRegex.test(newPwd)) {
+        throw new Error("Parola trebuie să conțină doar litere.");
+      }
+    } else {
+      if (!strongPwdRegex.test(newPwd)) {
+        throw new Error(
+          "Parola nouă trebuie să aibă minim 8 caractere, o literă mare, o cifră și un caracter special."
+        );
+      }
+    }
+    return true;
+  }),
+
+  // Caesar key if needed
+  body("caesarKey")
+    .if(body("method").equals("caesar"))
+    .isInt({ min: 1, max: 25 })
+    .withMessage("Cheia Caesar trebuie să fie între 1 și 25."),
+
+  // Affine params if needed
+  body("affineA")
+    .if(body("method").equals("affine"))
+    .isInt({ min: 1, max: 25 })
+    .custom((a) => gcd(BigInt(a), 26n) === 1n)
+    .withMessage("a trebuie prim cu 26."),
+  body("affineB")
+    .if(body("method").equals("affine"))
+    .isInt({ min: 0, max: 25 })
+    .withMessage("b trebuie între 0 și 25."),
+
+  // Hill matrix
+  body("hill")
+    .if(body("method").equals("hill"))
+    .notEmpty()
+    .withMessage("Matricea Hill este necesară.")
+    .bail()
+    .custom((h) => {
+      const m = typeof h === "string" ? JSON.parse(h) : h;
+      if (!Array.isArray(m) || m.length === 0 || m.length !== m[0]?.length) {
+        throw new Error("Matricea Hill trebuie pătratică.");
+      }
+      return true;
+    }),
+
+  // Symmetric key
+  body("symmetricKey")
+    .if(body("method").isIn(["ecb", "cbc"]))
+    .notEmpty()
+    .withMessage("Cheia simetrică este obligatorie."),
+
+  // RSA params
+  body(["rsa.p", "rsa.q", "rsa.e"])
+    .if(body("method").equals("rsa"))
+    .exists({ checkFalsy: true })
+    .withMessage("RSA necesită p, q și e."),
+
+  // bcrypt salt
+  body("bcryptSalt")
+    .if(body("method").equals("bcrypt"))
+    .isInt({ min: 4, max: 14 })
+    .withMessage("Salt bcrypt trebuie să fie între 4 și 14."),
+
+  // finally send back the first error as JSON
   (req, res, next) => {
     const errs = validationResult(req);
     if (!errs.isEmpty()) {

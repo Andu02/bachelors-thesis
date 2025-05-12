@@ -35,9 +35,6 @@ document
     const { method, caesarKey, hill, symmetricKey, rsa, affineA, affineB } =
       collectCryptoParams("change-password-form");
 
-    // ← now it's safe to log
-    console.log("Metoda selectată:", method);
-
     try {
       const response = await fetch("/change-password", {
         method: "POST",

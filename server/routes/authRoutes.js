@@ -3,10 +3,7 @@ import jwt from "jsonwebtoken";
 import pool from "../db.js";
 import { encryptPassword, comparePasswords } from "../utils/cryptoRouter.js";
 import { getEncryptionData } from "../utils/utils.js";
-import {
-  validateRegisterFields,
-  getPasswordErrorMessage,
-} from "../middlewares/validateInput.js";
+import { registerValidator } from "../middlewares/authValidators.js";
 
 const router = express.Router();
 const JWT_SECRET = "secretKey";
@@ -16,8 +13,8 @@ router.get("/register", (req, res) => {
   res.render("register", { message: null });
 });
 
-// ✅ POST /register - răspunde cu JSON pentru fetch()
-router.post("/register", validateRegisterFields, async (req, res) => {
+// POST /register — JSON via fetch()
+router.post("/register", registerValidator, async (req, res) => {
   const {
     username,
     password,
@@ -31,11 +28,8 @@ router.post("/register", validateRegisterFields, async (req, res) => {
     bcryptSalt,
   } = req.body;
 
-  // 🟡 DEBUG: Verificăm ce vine din frontend
-  console.log(">>> metoda selectată:", method);
-  console.log(">>> bcryptSalt primit:", bcryptSalt);
-
   try {
+    // build the encryption key & params
     const {
       encryptionKey,
       hillMatrix,
@@ -46,18 +40,11 @@ router.post("/register", validateRegisterFields, async (req, res) => {
       symmetricKey,
       rsa,
       parseInt(caesarKey),
-      {
-        a: parseInt(affineA),
-        b: parseInt(affineB),
-      },
+      { a: parseInt(affineA), b: parseInt(affineB) },
       parseInt(bcryptSalt)
     );
 
-    const passwordError = getPasswordErrorMessage(password, method);
-    if (passwordError) {
-      return res.status(400).json({ message: passwordError });
-    }
-
+    // encrypt
     const start = Date.now();
     const encryptedPassword = await encryptPassword(method, password, {
       hillKey: hillMatrix,
@@ -69,14 +56,17 @@ router.post("/register", validateRegisterFields, async (req, res) => {
     });
     const encryptionTime = Date.now() - start;
 
+    // save
     await pool.query(
       "INSERT INTO users (username, password, method, encryption_key) VALUES ($1, $2, $3, $4)",
       [username, encryptedPassword, method, encryptionKey]
     );
 
+    // auth cookie
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
     res.cookie("authToken", token, { httpOnly: true });
 
+    // feedback cookie
     res.cookie(
       "registrationDetails",
       JSON.stringify({
@@ -108,15 +98,13 @@ router.get("/login", (req, res) => {
   res.render("login", { message: null });
 });
 
-// POST /login (rămâne pe render clasic dacă nu trecem și el pe fetch)
+// POST /login (classic render)
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const result = await pool.query("SELECT * FROM users WHERE username = $1", [
       username,
     ]);
-
     if (result.rows.length === 0) {
       return res.render("login", { message: "Utilizatorul nu există." });
     }
@@ -125,30 +113,25 @@ router.post("/login", async (req, res) => {
     let extra = {};
 
     switch (user.method) {
-      case "rsa":
+      case "rsa": {
         const { p, q, e } = JSON.parse(user.encryption_key);
         extra.rsa = { p: BigInt(p), q: BigInt(q), e: BigInt(e) };
         break;
-
-      case "affine":
+      }
+      case "affine": {
         const { a, b } = JSON.parse(user.encryption_key);
         extra.affine = { a: parseInt(a), b: parseInt(b) };
         break;
-
+      }
       case "caesar":
         extra.caesarKey = parseInt(user.encryption_key);
         break;
-
       case "hill":
         extra.hillKey = JSON.parse(user.encryption_key);
         break;
-
       case "ecb":
       case "cbc":
         extra.symmetricKey = user.encryption_key;
-        break;
-
-      default:
         break;
     }
 
@@ -158,14 +141,12 @@ router.post("/login", async (req, res) => {
       user.password,
       extra
     );
-
     if (!valid) {
       return res.render("login", { message: "Parolă incorectă." });
     }
 
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
     res.cookie("authToken", token, { httpOnly: true });
-
     res.redirect("/success-login");
   } catch (err) {
     console.error("Eroare la autentificare:", err);
@@ -173,7 +154,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Logout
+// GET /logout
 router.get("/logout", (req, res) => {
   res.clearCookie("authToken");
   res.clearCookie("registrationDetails");

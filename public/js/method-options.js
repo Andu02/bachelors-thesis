@@ -21,17 +21,19 @@ const methodConfig = getMethodConfig(
 // 🔁 Ascunde toate grupurile de opțiuni
 export function hideAllOptions() {
   Object.values(methodConfig).forEach((config) => {
+    // hide the whole group
     config.show?.forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) element.style.display = "none";
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
     });
 
+    // disable the inputs but keep their name
     config.enable?.forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) {
-        element.removeAttribute("required");
-        element.removeAttribute("name");
-        element.setAttribute("disabled", "true");
+      const el = document.getElementById(id);
+      if (el) {
+        el.removeAttribute("required");
+        el.setAttribute("disabled", "true");
+        // ← no removeAttribute('name')
       }
     });
   });
@@ -42,47 +44,49 @@ function enableOptionsFor(method) {
   const config = methodConfig[method];
   if (!config) return;
 
+  // 1) Show only the groups for this method
   config.show?.forEach((id) => {
-    const element = document.getElementById(id);
-    if (element) element.style.display = "block";
+    const el = document.getElementById(id);
+    if (el) el.style.display = "block";
   });
 
+  // 2) Enable & require the inputs (but don’t touch their name!)
   config.enable?.forEach((id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.removeAttribute("disabled");
-      element.setAttribute("required", "true");
+    const el = document.getElementById(id);
+    if (el) {
+      el.removeAttribute("disabled");
+      el.setAttribute("required", "true");
+      // leave el.name alone so it will be submitted
     }
   });
 
+  // 3) Clear any previous warning
   if (config.clearWarning) {
-    const warningElement = document.getElementById(config.clearWarning);
-    if (warningElement) {
-      warningElement.classList.add("d-none");
-      warningElement.textContent = "";
+    const warningEl = document.getElementById(config.clearWarning);
+    if (warningEl) {
+      warningEl.classList.add("d-none");
+      warningEl.textContent = "";
     }
   }
 
-  // Custom logic (ex: Hill, RSA)
+  // 4) Custom per‐method logic (e.g. Hill matrix, hide decrypt for bcrypt/sha256)
   if (typeof config.custom === "function") {
-    // ❌ Ascunde secțiunea de decriptare pentru metode nereversibile
     const decryptSection = document.getElementById("decrypt-section");
     if (["bcrypt", "sha256"].includes(method)) {
-      if (decryptSection) decryptSection.classList.add("d-none");
+      decryptSection?.classList.add("d-none");
     } else {
-      if (decryptSection) decryptSection.classList.remove("d-none");
+      decryptSection?.classList.remove("d-none");
     }
-
     config.custom();
   }
 
-  // ✅ RSA: validare automată
+  // 5) RSA on‐the‐fly validation
   if (method === "rsa") {
     const warning = document.getElementById("rsa-warning");
     const pInput = document.getElementById("rsa-p");
     const qInput = document.getElementById("rsa-q");
     const eInput = document.getElementById("rsa-e");
-    const submitButton = document.querySelector("button[type='submit']");
+    const submitBtn = document.querySelector("button[type='submit']");
 
     const p = pInput?.value;
     const q = qInput?.value;
@@ -90,25 +94,22 @@ function enableOptionsFor(method) {
 
     if (p && q && e) {
       const result = fixAndValidateRSA({ p, q, e });
-
-      // 🛠 înlocuiește în UI dacă a fost corectat
       if (result.p !== p) pInput.value = result.p;
       if (result.q !== q) qInput.value = result.q;
 
       warning.classList.remove("d-none", "text-danger", "text-success");
-
       if (result.isValid) {
         warning.classList.add("text-success");
-        warning.textContent = `Valori corecte: p = ${result.p}, q = ${result.q}, φ(n) = ${result.phi}. e este prim cu φ(n).`;
-        submitButton.disabled = false;
+        warning.textContent = `Valori corecte: p = ${result.p}, q = ${result.q}, φ(n) = ${result.phi}.`;
+        submitBtn.disabled = false;
       } else {
         warning.classList.add("text-danger");
-        warning.textContent = `Valori corectate: p = ${result.p}, q = ${result.q}, φ(n) = ${result.phi}. ⚠️ e NU este prim cu φ(n).`;
-        submitButton.disabled = true;
+        warning.textContent = `⚠️ φ(n) și e NU sunt prime între ele.`;
+        submitBtn.disabled = true;
       }
     } else {
       warning.classList.add("d-none");
-      submitButton.disabled = true;
+      submitBtn.disabled = true;
     }
   }
 }

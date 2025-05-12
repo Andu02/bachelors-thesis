@@ -70,7 +70,7 @@ export function getEncryptionData(
   }
 
   if (method === "bcrypt") {
-    if (!bcryptSalt || isNaN(bcryptSalt) || bcryptSalt < 4 || bcryptSalt > 15) {
+    if (!bcryptSalt || isNaN(bcryptSalt) || bcryptSalt < 4 || bcryptSalt > 14) {
       throw new Error("Salt-ul Bcrypt trebuie să fie un număr între 4 și 15.");
     }
     encryptionKey = bcryptSalt.toString();

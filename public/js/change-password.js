@@ -31,8 +31,12 @@ document
       return;
     }
 
+    // ← first pull out everything, including `method`
     const { method, caesarKey, hill, symmetricKey, rsa, affineA, affineB } =
       collectCryptoParams("change-password-form");
+
+    // ← now it's safe to log
+    console.log("Metoda selectată:", method);
 
     try {
       const response = await fetch("/change-password", {
@@ -57,10 +61,9 @@ document
       messageDiv.textContent = data.message;
 
       if (response.ok) {
-        form.reset(); // 🔁 resetează toate câmpurile din formular
-        hideAllOptions(); // 🔁 ascunde inputurile criptografice (dacă e exportată din method-options.js)
-        toggleForm(); // 🔁 închide formularul
-
+        form.reset();
+        hideAllOptions();
+        toggleForm();
         setTimeout(() => {
           messageDiv.classList.add("d-none");
           messageDiv.textContent = "";

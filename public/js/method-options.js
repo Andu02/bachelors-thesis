@@ -19,7 +19,7 @@ const methodConfig = getMethodConfig(
 );
 
 // 🔁 Ascunde toate grupurile de opțiuni
-function hideAllOptions() {
+export function hideAllOptions() {
   Object.values(methodConfig).forEach((config) => {
     config.show?.forEach((id) => {
       const element = document.getElementById(id);

@@ -1,6 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import pool from "../db.js";
+import config from "../config.js";
 import { encryptPassword, comparePasswords } from "../utils/cryptoRouter.js";
 import { getEncryptionData, buildExtraParams } from "../utils/utils.js";
 import { changePasswordValidator } from "../middlewares/authValidators.js";

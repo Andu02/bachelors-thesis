@@ -1,12 +1,12 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import pool from "../db.js";
+import config from "../config.js";
 import { encryptPassword, comparePasswords } from "../utils/cryptoRouter.js";
 import { getEncryptionData } from "../utils/utils.js";
 import { registerValidator } from "../middlewares/authValidators.js";
 
 const router = express.Router();
-const JWT_SECRET = "secretKey";
 
 // GET /register
 router.get("/register", (req, res) => {
@@ -63,7 +63,7 @@ router.post("/register", registerValidator, async (req, res) => {
     );
 
     // auth cookie
-    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ username }, config.jwtSecret, { expiresIn: "1h" });
     res.cookie("authToken", token, { httpOnly: true });
 
     // feedback cookie
@@ -145,7 +145,7 @@ router.post("/login", async (req, res) => {
       return res.render("login", { message: "Parolă incorectă." });
     }
 
-    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ username }, config.jwtSecret, { expiresIn: "1h" });
     res.cookie("authToken", token, { httpOnly: true });
     res.redirect("/success-login");
   } catch (err) {

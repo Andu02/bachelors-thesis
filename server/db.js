@@ -1,12 +1,14 @@
-import pg from 'pg';
+import pg from "pg";
+import config from "./config.js";
+
 const { Pool } = pg;
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'postgres',
-  password: '1234',
-  port: 5432
+  user: config.db.user,
+  host: config.db.host,
+  database: config.db.database,
+  password: config.db.password,
+  port: config.db.port,
 });
 
 export default pool;

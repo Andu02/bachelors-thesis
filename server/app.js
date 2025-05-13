@@ -1,4 +1,5 @@
 import express from "express";
+import config from "./config.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -71,7 +72,6 @@ app.get("/ping", (req, res) => {
 });
 
 // Pornirea serverului
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Serverul rulează pe http://localhost:${PORT}`);
+app.listen(config.port, () => {
+  console.log(`Serverul rulează pe http://localhost:${config.port}`);
 });

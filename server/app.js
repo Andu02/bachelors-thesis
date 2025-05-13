@@ -71,6 +71,11 @@ app.get("/ping", (req, res) => {
   res.send("Serverul funcționează!");
 });
 
+// 404 handler
+app.use((req, res) => {
+  res.status(404).render("404");
+});
+
 // Pornirea serverului
 app.listen(config.port, () => {
   console.log(`Serverul rulează pe http://localhost:${config.port}`);

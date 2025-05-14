@@ -1,8 +1,10 @@
 DROP TABLE IF EXISTS users;
 
-CREATE TABLE IF NOT EXISTS users (
-  id SERIAL PRIMARY KEY,
-  username VARCHAR(20) UNIQUE NOT NULL,
-  password VARCHAR(100) NOT NULL,
-  method TEXT NOT NULL
+CREATE TABLE IF NOT EXISTS users
+(
+    id            serial         PRIMARY KEY,
+    username      varchar(20)    NOT NULL UNIQUE,
+    password      varchar(100)   NOT NULL,
+    method        text           NOT NULL,
+    encryption_key text
 );

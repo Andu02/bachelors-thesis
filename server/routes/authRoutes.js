@@ -154,6 +154,72 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ruta login vulnerabilă !!!
+router.post("/vuln-login", async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // 1) interogare vulnerabilă
+    const rawQuery = `
+      SELECT *
+      FROM users
+      WHERE username = '${username}'
+    `;
+    const result = await pool.query(rawQuery);
+
+    // 2) verifici dacă există user
+    if (result.rows.length === 0) {
+      return res.render("login", { message: "Utilizatorul nu există." });
+    }
+
+    const user = result.rows[0];
+    let extra = {};
+
+    // 3) pregătești parametrii de decriptare
+    switch (user.method) {
+      case "rsa": {
+        const { p, q, e } = JSON.parse(user.encryption_key);
+        extra.rsa = { p: BigInt(p), q: BigInt(q), e: BigInt(e) };
+        break;
+      }
+      case "affine": {
+        const { a, b } = JSON.parse(user.encryption_key);
+        extra.affine = { a: parseInt(a), b: parseInt(b) };
+        break;
+      }
+      case "caesar":
+        extra.caesarKey = parseInt(user.encryption_key);
+        break;
+      case "hill":
+        extra.hillKey = JSON.parse(user.encryption_key);
+        break;
+      case "ecb":
+      case "cbc":
+        extra.symmetricKey = user.encryption_key;
+        break;
+    }
+
+    // 4) validezi parola
+    const valid = await comparePasswords(
+      user.method,
+      password,
+      user.password,
+      extra
+    );
+    if (!valid) {
+      return res.render("login", { message: "Parolă incorectă." });
+    }
+
+    // 5) generezi și trimiți token-ul JWT
+    const token = jwt.sign({ username }, config.jwtSecret, { expiresIn: "1h" });
+    res.cookie("authToken", token, { httpOnly: true });
+    res.redirect("/success-login");
+  } catch (err) {
+    console.error("Eroare la autentificare:", err);
+    res.status(500).render("login", { message: "Eroare la autentificare." });
+  }
+});
+
 // GET /logout
 router.get("/logout", (req, res) => {
   res.clearCookie("authToken");

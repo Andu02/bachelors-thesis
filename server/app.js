@@ -5,6 +5,46 @@ import path from "path";
 import { fileURLToPath } from "url";
 import rateLimit from "express-rate-limit";
 
+// Constante configurabile
+const GLOBAL_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const GLOBAL_LIMIT_MAX = 5000;
+
+const CHANGE_PASSWORD_WINDOW_MS = 15 * 60 * 1000;
+const CHANGE_PASSWORD_MAX = 5;
+
+const SIMULATION_WINDOW_MS = 60 * 1000;
+const SIMULATION_MAX = 10;
+
+// Limitatori
+const globalLimiter = rateLimit({
+  windowMs: GLOBAL_LIMIT_WINDOW_MS,
+  max: GLOBAL_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const changePasswordLimiter = rateLimit({
+  windowMs: CHANGE_PASSWORD_WINDOW_MS,
+  max: CHANGE_PASSWORD_MAX,
+  message: {
+    message:
+      "Prea multe încercări de schimbare parolă, încearcă peste 15 minute.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const simulationLimiter = rateLimit({
+  windowMs: SIMULATION_WINDOW_MS,
+  max: SIMULATION_MAX,
+  message: {
+    message:
+      "Rate limit atins pentru simulări, încearcă din nou peste un minut.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Import rute
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
@@ -13,39 +53,9 @@ import simulationRoutes from "./routes/simulationRoutes.js";
 
 const app = express();
 
-//  global limiter: max 200 requests per 15 min per IP
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Aplicare limitatori
 app.use(globalLimiter);
-
-// more restrictive limiter for password changes
-const changePasswordLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // only 5 attempts per window
-  message: {
-    message:
-      "Prea multe încercări de schimbare parolă, încearcă peste 15 minute.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 app.use("/change-password", changePasswordLimiter);
-
-// and one for your simulation endpoint (e.g. brute-force demo)
-const simulationLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // no more than 10 sim. attacks per minute
-  message: {
-    message:
-      "Rate limit atins pentru simulări, încearcă din nou peste un minut.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
 app.use("/simulate-attack", simulationLimiter);
 
 // Configurare __dirname
@@ -60,13 +70,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "../public")));
 
-// Rute organizate pe module
+// Rute
 app.use("/", publicRoutes);
 app.use("/", authRoutes);
 app.use("/", profileRoutes);
 app.use("/", simulationRoutes);
 
-// Test ping
+// Ping test
 app.get("/ping", (req, res) => {
   res.send("Serverul funcționează!");
 });
@@ -76,7 +86,7 @@ app.use((req, res) => {
   res.status(404).render("404");
 });
 
-// Pornirea serverului
+// Start server
 app.listen(config.port, () => {
   console.log(`Serverul rulează pe http://localhost:${config.port}`);
 });

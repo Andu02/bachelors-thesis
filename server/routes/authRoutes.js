@@ -1,10 +1,9 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import pool from "../db.js";
-import config from "../config.js";
-import { encryptPassword, comparePasswords } from "../utils/cryptoRouter.js";
-import { getEncryptionData } from "../utils/utils.js";
 import { registerValidator } from "../middlewares/authValidators.js";
+import config from "../config.js";
+import { handleRegister } from "../utils/handleRegister.js";
+import { handleLogin } from "../utils/handleLogin.js";
 
 const router = express.Router();
 
@@ -13,84 +12,14 @@ router.get("/register", (req, res) => {
   res.render("register", { message: null });
 });
 
-// POST /register — JSON via fetch()
-router.post("/register", registerValidator, async (req, res) => {
-  const {
-    username,
-    password,
-    method,
-    caesarKey,
-    hill,
-    symmetricKey,
-    rsa,
-    affineA,
-    affineB,
-    bcryptSalt,
-  } = req.body;
+// POST /register — cu validator
+router.post("/register", registerValidator, (req, res) => {
+  return handleRegister(req, res, false);
+});
 
-  try {
-    // build the encryption key & params
-    const {
-      encryptionKey,
-      hillMatrix,
-      symmetricKey: symKey,
-    } = getEncryptionData(
-      method,
-      hill,
-      symmetricKey,
-      rsa,
-      parseInt(caesarKey),
-      { a: parseInt(affineA), b: parseInt(affineB) },
-      parseInt(bcryptSalt)
-    );
-
-    // encrypt
-    const start = Date.now();
-    const encryptedPassword = await encryptPassword(method, password, {
-      hillKey: hillMatrix,
-      symmetricKey: symKey,
-      rsa,
-      caesarKey: parseInt(caesarKey),
-      affine: { a: parseInt(affineA), b: parseInt(affineB) },
-      bcryptSalt: parseInt(bcryptSalt),
-    });
-    const encryptionTime = Date.now() - start;
-
-    // save
-    await pool.query(
-      "INSERT INTO users (username, password, method, encryption_key) VALUES ($1, $2, $3, $4)",
-      [username, encryptedPassword, method, encryptionKey]
-    );
-
-    // auth cookie
-    const token = jwt.sign({ username }, config.jwtSecret, { expiresIn: "1h" });
-    res.cookie("authToken", token, { httpOnly: true });
-
-    // feedback cookie
-    res.cookie(
-      "registrationDetails",
-      JSON.stringify({
-        username,
-        method,
-        originalPassword: password,
-        encryptedPassword,
-        encryptionTime,
-      }),
-      { httpOnly: false, maxAge: 3600000 }
-    );
-
-    return res.status(200).json({ message: "Cont creat cu succes!" });
-  } catch (err) {
-    if (err.code === "23505") {
-      return res
-        .status(400)
-        .json({ message: "Acest nume de utilizator este deja folosit." });
-    }
-    console.error("Eroare la înregistrare:", err);
-    return res
-      .status(500)
-      .json({ message: "Eroare internă la salvarea contului." });
-  }
+// POST /vuln-register — fără validator
+router.post("/vuln-register", (req, res) => {
+  return handleRegister(req, res, true);
 });
 
 // GET /login
@@ -98,126 +27,14 @@ router.get("/login", (req, res) => {
   res.render("login", { message: null });
 });
 
-// POST /login (classic render)
-router.post("/login", async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
-      username,
-    ]);
-    if (result.rows.length === 0) {
-      return res.render("login", { message: "Utilizatorul nu există." });
-    }
-
-    const user = result.rows[0];
-    let extra = {};
-
-    switch (user.method) {
-      case "rsa": {
-        const { p, q, e } = JSON.parse(user.encryption_key);
-        extra.rsa = { p: BigInt(p), q: BigInt(q), e: BigInt(e) };
-        break;
-      }
-      case "affine": {
-        const { a, b } = JSON.parse(user.encryption_key);
-        extra.affine = { a: parseInt(a), b: parseInt(b) };
-        break;
-      }
-      case "caesar":
-        extra.caesarKey = parseInt(user.encryption_key);
-        break;
-      case "hill":
-        extra.hillKey = JSON.parse(user.encryption_key);
-        break;
-      case "ecb":
-      case "cbc":
-        extra.symmetricKey = user.encryption_key;
-        break;
-    }
-
-    const valid = await comparePasswords(
-      user.method,
-      password,
-      user.password,
-      extra
-    );
-    if (!valid) {
-      return res.render("login", { message: "Parolă incorectă." });
-    }
-
-    const token = jwt.sign({ username }, config.jwtSecret, { expiresIn: "1h" });
-    res.cookie("authToken", token, { httpOnly: true });
-    res.redirect("/success-login");
-  } catch (err) {
-    console.error("Eroare la autentificare:", err);
-    res.status(500).render("login", { message: "Eroare la autentificare." });
-  }
+// POST /login — sigur
+router.post("/login", (req, res) => {
+  return handleLogin(req, res, false);
 });
 
-// ruta login vulnerabilă !!!
-router.post("/vuln-login", async (req, res) => {
-  const { username, password } = req.body;
-
-  try {
-    // 1) interogare vulnerabilă
-    const rawQuery = `
-      SELECT *
-      FROM users
-      WHERE username = '${username}'
-    `;
-    const result = await pool.query(rawQuery);
-
-    // 2) verifici dacă există user
-    if (result.rows.length === 0) {
-      return res.render("login", { message: "Utilizatorul nu există." });
-    }
-
-    const user = result.rows[0];
-    let extra = {};
-
-    // 3) pregătești parametrii de decriptare
-    switch (user.method) {
-      case "rsa": {
-        const { p, q, e } = JSON.parse(user.encryption_key);
-        extra.rsa = { p: BigInt(p), q: BigInt(q), e: BigInt(e) };
-        break;
-      }
-      case "affine": {
-        const { a, b } = JSON.parse(user.encryption_key);
-        extra.affine = { a: parseInt(a), b: parseInt(b) };
-        break;
-      }
-      case "caesar":
-        extra.caesarKey = parseInt(user.encryption_key);
-        break;
-      case "hill":
-        extra.hillKey = JSON.parse(user.encryption_key);
-        break;
-      case "ecb":
-      case "cbc":
-        extra.symmetricKey = user.encryption_key;
-        break;
-    }
-
-    // 4) validezi parola
-    const valid = await comparePasswords(
-      user.method,
-      password,
-      user.password,
-      extra
-    );
-    if (!valid) {
-      return res.render("login", { message: "Parolă incorectă." });
-    }
-
-    // 5) generezi și trimiți token-ul JWT
-    const token = jwt.sign({ username }, config.jwtSecret, { expiresIn: "1h" });
-    res.cookie("authToken", token, { httpOnly: true });
-    res.redirect("/success-login");
-  } catch (err) {
-    console.error("Eroare la autentificare:", err);
-    res.status(500).render("login", { message: "Eroare la autentificare." });
-  }
+// POST /vuln-login — vulnerabil
+router.post("/vuln-login", (req, res) => {
+  return handleLogin(req, res, true);
 });
 
 // GET /logout

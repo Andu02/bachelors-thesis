@@ -39,5 +39,9 @@ export function getMethodConfig(
       show: ["bcrypt-options"],
       enable: ["bcrypt-salt"],
     },
+    sha256: {
+      show: ["sha256-options"],
+      enable: ["sha256-salt"],
+    },
   };
 }

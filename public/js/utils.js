@@ -61,6 +61,10 @@ export function collectCryptoParams(formId) {
   const bcryptSaltInput = form.querySelector("#bcrypt-salt");
   const bcryptSalt = bcryptSaltInput ? parseInt(bcryptSaltInput.value) : null;
 
+  // 🔐 SHA256 salt (nou)
+  const sha256SaltInput = form.querySelector("#sha256-salt");
+  const sha256Salt = sha256SaltInput ? sha256SaltInput.value.trim() : null;
+
   return {
     method,
     caesarKey,
@@ -70,6 +74,7 @@ export function collectCryptoParams(formId) {
     affineA: affineA ? parseInt(affineA) : null,
     affineB: affineB ? parseInt(affineB) : null,
     bcryptSalt,
+    sha256Salt, // adăugat aici
   };
 }
 

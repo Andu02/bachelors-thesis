@@ -1,3 +1,4 @@
+// server/utils/handleLogin.js
 import jwt from "jsonwebtoken";
 import pool from "../db.js";
 import config from "../config.js";
@@ -39,6 +40,12 @@ export async function handleLogin(req, res, isVulnerable = false) {
       case "cbc":
         extra.symmetricKey = user.encryption_key;
         break;
+      case "bcrypt":
+        extra.bcryptSalt = parseInt(user.encryption_key);
+        break;
+      case "sha256":
+        extra.sha256Salt = user.encryption_key;
+        break;
     }
 
     const valid = await comparePasswords(
@@ -47,6 +54,7 @@ export async function handleLogin(req, res, isVulnerable = false) {
       user.password,
       extra
     );
+
     if (!valid) {
       return res.render("login", { message: "Parolă incorectă." });
     }

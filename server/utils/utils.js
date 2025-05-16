@@ -1,6 +1,5 @@
 import { isHillMatrixValid } from "../crypto-methods/hill.js";
 
-// ✅ Obține datele necesare criptării în funcție de metodă
 export function getEncryptionData(
   method,
   hill,
@@ -8,7 +7,8 @@ export function getEncryptionData(
   rsa = {},
   caesarKey = null,
   affine = {},
-  bcryptSalt = null
+  bcryptSalt = null,
+  sha256Salt = null
 ) {
   let encryptionKey = null;
   let hillMatrix = null;
@@ -70,10 +70,17 @@ export function getEncryptionData(
   }
 
   if (method === "bcrypt") {
-    if (!bcryptSalt || isNaN(bcryptSalt) || bcryptSalt < 4 || bcryptSalt > 14) {
+    if (!bcryptSalt || isNaN(bcryptSalt) || bcryptSalt < 4 || bcryptSalt > 15) {
       throw new Error("Salt-ul Bcrypt trebuie să fie un număr între 4 și 15.");
     }
     encryptionKey = bcryptSalt.toString();
+  }
+
+  if (method === "sha256") {
+    if (typeof sha256Salt !== "string" || sha256Salt.trim() === "") {
+      throw new Error("Salt-ul SHA256 trebuie să fie un string nevid.");
+    }
+    encryptionKey = sha256Salt;
   }
 
   return { encryptionKey, hillMatrix, symmetricKey: symKey };

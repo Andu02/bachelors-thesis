@@ -63,3 +63,22 @@
     <% } %>
   </select>
 </div>
+
+<!-- SHA-256 -->
+<div id="sha256-options" class="mb-3" style="display: none;">
+  <label for="sha256-salt" class="form-label">Salt (SHA256)</label>
+  <input
+    type="text"
+    class="form-control"
+    id="sha256-salt"
+    name="sha256Salt"
+    required
+    minlength="1"
+    maxlength="32"
+    pattern="[A-Za-z0-9]+"
+    title="Salt-ul trebuie să conțină doar litere și cifre"
+  />
+</div>
+
+
+

@@ -20,7 +20,8 @@ document
       rsa,
       affineA,
       affineB,
-      bcryptSalt, // ✅ acum inclus corect
+      bcryptSalt,
+      sha256Salt, // adaugă aici
     } = collectCryptoParams("register-form");
 
     try {
@@ -37,7 +38,8 @@ document
           rsa,
           affineA,
           affineB,
-          bcryptSalt, // ✅ trimis corect
+          bcryptSalt,
+          sha256Salt, // și aici
         }),
       });
 

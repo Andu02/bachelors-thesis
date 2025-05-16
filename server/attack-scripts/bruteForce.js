@@ -4,115 +4,96 @@ import path from "path";
 import crypto from "crypto";
 import bcrypt from "bcrypt";
 
-// Importă funcțiile pentru toate metodele de criptare
-import { decryptCaesar } from "../crypto-methods/caesar.js";
-import { decryptVigenere } from "../crypto-methods/vigenere.js";
-import { decryptHill } from "../crypto-methods/hill.js";
-import { decryptAffine } from "../crypto-methods/affine.js";
-import { decryptECB } from "../crypto-methods/ecb.js";
-import { decryptCBC } from "../crypto-methods/cbc.js";
+// Import metode de decriptare
+import { decrypt as decryptCaesar } from "../crypto-methods/caesar.js";
+import { decrypt as decryptHill } from "../crypto-methods/hill.js";
+import { decrypt as decryptAffine } from "../crypto-methods/affine.js";
+import { decrypt as decryptECB } from "../crypto-methods/ecb.js";
+import { decrypt as decryptCBC } from "../crypto-methods/cbc.js";
 
-// Calea către lista de parole
-const dictPath = path.resolve(
-  path.dirname(import.meta.url.replace("file://", "")),
-  "100k-most-used-passwords-NCSC.txt"
-);
+// Dicționar
+const dictPath = path.resolve("attack-scripts", "wordlist.txt");
 let DICT = [];
 if (fs.existsSync(dictPath)) {
   DICT = fs.readFileSync(dictPath, "utf8").split(/\r?\n/).filter(Boolean);
-  console.log(`Loaded dictionary with ${DICT.length} entries`);
+  console.log(`✅ Dictionary loaded (${DICT.length} entries)`);
+} else {
+  console.warn("⚠️ Dicționarul nu a fost găsit.");
 }
 
-// Helper SHA-256
+// SHA-256 helper
 function sha256(input) {
   return crypto.createHash("sha256").update(input).digest("hex");
 }
 
-// Calea către dump-ul cu hash-uri
-const scriptsDir = path.dirname(import.meta.url.replace("file://", ""));
-const dumpFile = process.argv[2]
-  ? path.resolve(process.cwd(), process.argv[2])
-  : path.resolve(scriptsDir, "users_dump.txt");
-
-if (!fs.existsSync(dumpFile)) {
-  console.error(`Nu găsesc fișierul ${dumpFile}.`);
-  console.error(
-    `Utilizare: node server/attack-scripts/bruteForceTest.js <users_dump.txt>`
-  );
+// CSV input
+const dumpPath = path.resolve("attack-scripts", "users_dump.csv");
+if (!fs.existsSync(dumpPath)) {
+  console.error("❌ Fișierul users_dump.csv nu există.");
   process.exit(1);
 }
+const lines = fs.readFileSync(dumpPath, "utf8").split(/\r?\n/).filter(Boolean);
 
-const lines = fs.readFileSync(dumpFile, "utf8").split(/\r?\n/).filter(Boolean);
-
+// Atac
 (async () => {
-  console.log(`Starting attack on ${lines.length} entries…`);
   console.log("username,method,attempts,time_seconds,cracked_password");
 
   for (const line of lines) {
-    const [, username, hash, method, encryption_key] = line.split(",");
-
+    const [username, passwordHash, method, rawKey] = line.split(",");
     let cracked = false;
-    let password = "";
+    let password = "*";
     let attempts = 0;
     const t0 = Date.now();
 
     try {
       switch (method) {
         case "caesar":
-          for (let shift = 1; shift < 26 && !cracked; shift++) {
+          for (let key = 1; key < 26 && !cracked; key++) {
             attempts++;
-            const cand = decryptCaesar(hash, shift);
-            if (cand) {
+            const result = decryptCaesar(passwordHash, key);
+            if (result) {
               cracked = true;
-              password = cand;
+              password = result;
             }
-          }
-          break;
-
-        case "vigenere":
-          attempts++;
-          const candVig = decryptVigenere(hash, "KEY");
-          if (candVig) {
-            cracked = true;
-            password = candVig;
           }
           break;
 
         case "hill":
           attempts++;
-          const matrix = JSON.parse(encryption_key);
-          password = decryptHill(hash, matrix);
+          const hillMatrix = JSON.parse(rawKey);
+          password = decryptHill(passwordHash, hillMatrix);
           cracked = true;
           break;
 
         case "affine":
           attempts++;
-          const { a, b } = JSON.parse(encryption_key);
-          password = decryptAffine(hash, a, b);
+          const { a, b } = JSON.parse(rawKey);
+          password = decryptAffine(passwordHash, a, b);
           cracked = true;
           break;
 
         case "ecb":
           attempts++;
-          const ecbKey = Buffer.from(encryption_key, "hex");
-          password = decryptECB(Buffer.from(hash, "hex"), ecbKey);
+          const keyECB = Buffer.from(rawKey, "hex");
+          const encryptedBufferECB = Buffer.from(passwordHash, "hex");
+          password = decryptECB(encryptedBufferECB, keyECB);
           cracked = true;
           break;
 
         case "cbc":
-          const data = Buffer.from(hash, "hex");
-          const cbcKey = Buffer.from(encryption_key, "hex");
-          const iv = data.slice(0, 16);
-          const ct = data.slice(16);
-          password = decryptCBC(ct, cbcKey, iv);
-          cracked = true;
           attempts++;
+          const buffer = Buffer.from(passwordHash, "hex");
+          const keyCBC = Buffer.from(rawKey, "hex");
+          const iv = buffer.slice(0, 16);
+          const ct = buffer.slice(16);
+          password = decryptCBC(ct, keyCBC, iv);
+          cracked = true;
           break;
 
         case "sha256":
           for (const pw of DICT) {
             attempts++;
-            if (sha256(encryption_key + pw) === hash) {
+            if (sha256(rawKey + pw) === passwordHash) {
               cracked = true;
               password = pw;
               break;
@@ -123,8 +104,7 @@ const lines = fs.readFileSync(dumpFile, "utf8").split(/\r?\n/).filter(Boolean);
         case "bcrypt":
           for (const pw of DICT) {
             attempts++;
-            if (attempts > 1_000_000) break;
-            if (await bcrypt.compare(pw, hash)) {
+            if (await bcrypt.compare(pw, passwordHash)) {
               cracked = true;
               password = pw;
               break;
@@ -133,22 +113,17 @@ const lines = fs.readFileSync(dumpFile, "utf8").split(/\r?\n/).filter(Boolean);
           break;
 
         default:
-          console.warn(`Metodă necunoscută: ${method}`);
+          console.warn(`❓ Metodă necunoscută: ${method}`);
           break;
       }
     } catch (e) {
       console.error(
-        `Eroare la metoda ${method} pentru ${username}:`,
-        e.message
+        `Eroare la metoda ${method} pentru ${username}: ${e.message}`
       );
     }
 
     const t1 = Date.now();
-    const timeSeconds = ((t1 - t0) / 1000).toFixed(2);
-    console.log(
-      `${username},${method},${attempts},${timeSeconds},${
-        cracked ? password : "*"
-      }`
-    );
+    const time = ((t1 - t0) / 1000).toFixed(2);
+    console.log(`${username},${method},${attempts},${time},${password}`);
   }
 })();

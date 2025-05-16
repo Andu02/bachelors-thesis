@@ -1,3 +1,4 @@
+// server/utils/handleRegister.js
 import jwt from "jsonwebtoken";
 import pool from "../db.js";
 import config from "../config.js";
@@ -17,9 +18,9 @@ export async function handleRegister(req, res, isVulnerable = false) {
       affineA,
       affineB,
       bcryptSalt,
+      sha256Salt, // ✅ nou
     } = req.body;
 
-    // build encryptionKey & params
     const {
       encryptionKey,
       hillMatrix,
@@ -31,7 +32,8 @@ export async function handleRegister(req, res, isVulnerable = false) {
       rsa,
       parseInt(caesarKey),
       { a: parseInt(affineA), b: parseInt(affineB) },
-      parseInt(bcryptSalt)
+      parseInt(bcryptSalt),
+      sha256Salt // ✅ nou
     );
 
     const start = Date.now();
@@ -42,10 +44,10 @@ export async function handleRegister(req, res, isVulnerable = false) {
       caesarKey: parseInt(caesarKey),
       affine: { a: parseInt(affineA), b: parseInt(affineB) },
       bcryptSalt: parseInt(bcryptSalt),
+      sha256Salt, // ✅ nou
     });
     const encryptionTime = Date.now() - start;
 
-    // insert into DB
     await pool.query(
       "INSERT INTO users (username, password, method, encryption_key) VALUES ($1, $2, $3, $4)",
       [username, encryptedPassword, method, encryptionKey]

@@ -12,26 +12,13 @@ const __dirname = dirname(__filename);
 const dictPath = path.resolve(__dirname, "100k-most-used-passwords-NCSC.txt");
 const outputPath = path.resolve(__dirname, "1k_user_data_to_encrypt.csv");
 
-const methods = [
-  "caesar",
-  "vigenere",
-  "hill",
-  "affine",
-  "ecb",
-  "cbc",
-  "sha256",
-  "bcrypt",
-];
+// Doar metodele suportate pentru parole!
+const methods = ["caesar", "hill", "affine", "ecb", "cbc", "sha256", "bcrypt"];
 const samplesPerMethod = 125;
 
-// Funcții de generare a cheilor
+// --- Funcții de generare a cheilor pentru fiecare metodă ---
 function randomCaesarKey() {
   return String(Math.floor(Math.random() * 25) + 1);
-}
-
-function randomVigenereKey() {
-  const options = ["KEY", "SECRET", "ALPHA", "CRYPT"];
-  return options[Math.floor(Math.random() * options.length)];
 }
 
 function randomAffineKey() {
@@ -69,7 +56,7 @@ function randomBcryptSalt() {
   return String(Math.floor(Math.random() * 7) + 8); // între 8 și 14
 }
 
-// Încarcă parola
+// --- Încarcă parolele din dicționar ---
 const passwords = fs
   .readFileSync(dictPath, "utf-8")
   .split(/\r?\n/)
@@ -78,7 +65,11 @@ const passwords = fs
 const output = [];
 let userCounter = 1;
 
+// --- Adaugă header pentru CSV! ---
+output.push(["username", "password", "method", "encryption_key"]);
+
 for (const method of methods) {
+  // Selectăm aleator 125 parole per metodă
   const selected = passwords
     .sort(() => 0.5 - Math.random())
     .slice(0, samplesPerMethod);
@@ -90,9 +81,6 @@ for (const method of methods) {
     switch (method) {
       case "caesar":
         encryption_key = randomCaesarKey();
-        break;
-      case "vigenere":
-        encryption_key = randomVigenereKey();
         break;
       case "affine":
         encryption_key = randomAffineKey();
@@ -116,14 +104,10 @@ for (const method of methods) {
   }
 }
 
-// Scrie CSV
+// --- Scrie CSV cu header ---
 const csvContent = output
   .map(([u, p, m, k]) => `${u},${p},${m},"${k}"`)
   .join("\n");
 
-fs.writeFileSync(
-  outputPath,
-  `username,password,method,encryption_key\n${csvContent}`,
-  "utf-8"
-);
+fs.writeFileSync(outputPath, csvContent, "utf-8");
 console.log(`✅ Fișier generat: ${outputPath}`);

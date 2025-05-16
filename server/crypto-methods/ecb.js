@@ -35,12 +35,6 @@ function blockEncrypt(block, key) {
     const shift = key.charCodeAt(i % key.length) % 26;
     const code = (block.charCodeAt(i) - 65 + shift) % 26;
     result += String.fromCharCode(code + 65);
-    console.log(
-      "char:",
-      block[i],
-      "shift:",
-      key.charCodeAt(i % key.length) % 26
-    );
   }
 
   return result;

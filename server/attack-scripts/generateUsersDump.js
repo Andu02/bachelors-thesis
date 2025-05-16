@@ -16,21 +16,27 @@ const OUT_PATH = path.resolve("attack-scripts", "users_dump.csv");
       return;
     }
 
-    // Fără header, și fără utilizatori cu metoda "vigenere"
-    const lines = result.rows
-      .filter((row) => row.method !== "vigenere")
-      .map((row) =>
-        [
-          row.username,
-          row.password,
-          row.method,
-          JSON.stringify(row.encryption_key),
-        ].join(",")
-      );
+    // Adaugă header la CSV
+    const lines = [
+      "username,password,method,encryption_key",
+      ...result.rows
+        .filter((row) => row.method !== "vigenere" && row.method !== "rsa")
+        .map((row) => {
+          // punem între ghilimele orice encryption_key care poate conține virgule
+          const ekRaw =
+            typeof row.encryption_key === "string"
+              ? row.encryption_key
+              : JSON.stringify(row.encryption_key);
+          const ekEsc = ekRaw.replace(/"/g, '""');
+          return [row.username, row.password, row.method, `"${ekEsc}"`].join(
+            ","
+          );
+        }),
+    ];
 
     fs.writeFileSync(OUT_PATH, lines.join("\n"), "utf8");
     console.log(
-      `✅ Dump generat: ${OUT_PATH} (${lines.length} utilizatori validați)`
+      `✅ Dump generat: ${OUT_PATH} (${lines.length - 1} utilizatori validați)`
     );
   } catch (err) {
     console.error("❌ Eroare la generarea dump-ului:", err.message);

@@ -19,13 +19,33 @@ fs.createReadStream(csvPath)
     console.log(`📤 Trimit ${users.length} utilizatori către server...\n`);
 
     for (const user of users) {
-      const { username, password, method, encryption_key } = user;
+      let { username, password, method, encryption_key } = user;
+      method = method?.replace(/^"|"$/g, ""); // curăță ghilimele dacă există
 
+      // *** Sare peste orice linie goală sau necunoscută ***
+      if (
+        !method ||
+        ![
+          "caesar",
+          "hill",
+          "affine",
+          "ecb",
+          "cbc",
+          "sha256",
+          "bcrypt",
+        ].includes(method)
+      ) {
+        console.warn(
+          `[WARN] Linie ignorată (method necunoscut): ${username}, ${method}`
+        );
+        continue;
+      }
+
+      // Inițializează payloadul cu toate cheile așteptate de backend
       const payload = {
         username,
         password,
         method,
-        encryptionKey: encryption_key,
         caesarKey: null,
         hill: null,
         symmetricKey: null,
@@ -33,16 +53,13 @@ fs.createReadStream(csvPath)
         affineA: null,
         affineB: null,
         bcryptSalt: null,
+        sha256Salt: null,
       };
 
       try {
         switch (method) {
           case "caesar":
             payload.caesarKey = parseInt(encryption_key);
-            break;
-
-          case "vigenere":
-            payload.symmetricKey = encryption_key;
             break;
 
           case "hill":
@@ -62,7 +79,7 @@ fs.createReadStream(csvPath)
             break;
 
           case "sha256":
-            payload.symmetricKey = encryption_key;
+            payload.sha256Salt = encryption_key;
             break;
 
           case "bcrypt":

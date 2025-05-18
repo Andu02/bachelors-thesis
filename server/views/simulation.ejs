@@ -1,65 +1,159 @@
-<%- include('partials/header', { title: "Simulare atac cibernetic" }) %>
+<%- include("partials/header", { title : "Simulare atacuri cibernetice" }) %>
 
-  <div class="card shadow p-4 w-100" style="max-width: 600px;">
-    <h2 class="text-center mb-4">Simulează un atac asupra parolei tale</h2>
+<div class="container py-5" style="max-width:600px; margin:auto">
+  <h1 class="text-center mb-4">Simulare atacuri cibernetice</h1>
 
-    <p><strong>Utilizator:</strong> <%= username %></p>
-    <p><strong>Metodă criptare:</strong> <%= method %></p>
-    <p><strong>Parolă criptată:</strong> <code><%= hash %></code></p>
-
-    <form id="attack-form" class="mt-4">
-      <input type="hidden" id="method" value="<%= method %>" />
-      <input type="hidden" id="hash" value="<%= hash %>" />
-
-      <button type="submit" class="btn btn-danger w-100">
-        <span id="spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-        Execută atac automat
-      </button>
-    </form>
-
-    <div id="result" class="mt-4 alert d-none"></div>
+  <!-- 1. Generează utilizatori -->
+  <div class="card mb-4 p-3">
+    <h5>Generează utilizatori</h5>
+    <div class="input-group mb-2">
+      <input id="input-count" type="number" class="form-control" min="1" value="1000">
+      <button id="btn-generate" class="btn btn-primary">Pornește</button>
+    </div>
+    <div id="spinner-generate" class="d-none text-center mb-2">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+    <a id="link-generate" class="btn btn-outline-primary d-none" download>
+      Descarcă CSV
+    </a>
   </div>
 
-  <script>
-    document.getElementById('attack-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
+  <!-- 2. Șterge toți utilizatorii -->
+  <div class="card mb-4 p-3 d-none" id="section-delete">
+    <h5>Șterge toți utilizatorii</h5>
+    <button id="btn-delete" class="btn btn-danger mb-2">Pornește</button>
+    <div id="spinner-delete" class="d-none text-center mb-2">
+      <div class="spinner-border text-danger" role="status"></div>
+    </div>
+    <div id="text-delete" class="text-success"></div>
+  </div>
 
-      const algorithm = document.getElementById('method').value;
-      const hash = document.getElementById('hash').value;
+  <!-- 3. Brute-force dump utilizatori -->
+  <div class="card mb-4 p-3">
+    <h5>Brute-force dump utilizatori</h5>
+    <button id="btn-bruteforce" class="btn btn-warning mb-2">Pornește</button>
+    <div id="spinner-bruteforce" class="d-none text-center mb-2">
+      <div class="spinner-border text-secondary" role="status"></div>
+    </div>
+    <a id="link-bruteforce" class="btn btn-outline-secondary d-none" download>
+      Descarcă CSV
+    </a>
+  </div>
 
-      const resultDiv = document.getElementById('result');
-      const spinner = document.getElementById('spinner');
-      resultDiv.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
-      resultDiv.classList.add('alert-warning');
-      resultDiv.textContent = '⏳ Se execută atacul...';
-      spinner.classList.remove('d-none');
+  <!-- 4. Compară rezultate brute-force -->
+  <div class="card mb-4 p-3 d-none" id="section-compare">
+    <h5>Compară rezultate brute-force</h5>
+    <button id="btn-compare" class="btn btn-dark mb-2">Pornește</button>
+    <div id="spinner-compare" class="d-none text-center mb-2">
+      <div class="spinner-border text-dark" role="status"></div>
+    </div>
+    <a id="link-compare" class="btn btn-outline-dark d-none" download>
+      Descarcă raport comparare
+    </a>
+  </div>
+</div>
 
-      try {
-        const res = await fetch('/simulate-attack', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ algorithm, hash })
-        });
+<script>
+  function setLoading(active) {
+    document.querySelectorAll("button").forEach(b => b.disabled = active);
+  }
 
-        const data = await res.json();
-        resultDiv.classList.remove('alert-warning');
-        spinner.classList.add('d-none');
+  // 1) Generate
+  document.getElementById("btn-generate").onclick = async () => {
+    const count = +document.getElementById("input-count").value || 1000;
+    setLoading(true);
+    document.getElementById("spinner-generate").classList.remove("d-none");
+    document.getElementById("link-generate").classList.add("d-none");
 
-        if (data.success) {
-          resultDiv.classList.add('alert-success');
-          resultDiv.textContent = `✅ Atacul a reușit! Parola găsită: ${data.result}`;
-        } else {
-          resultDiv.classList.add('alert-danger');
-          resultDiv.textContent = `❌ ${data.message}`;
-        }
+    try {
+      const res = await fetch("/simulation/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ count })
+      });
+      if (!res.ok) throw new Error("Server error");
+      const { reportUrl } = await res.json();
 
-      } catch (err) {
-        resultDiv.classList.remove('alert-warning');
-        resultDiv.classList.add('alert-danger');
-        spinner.classList.add('d-none');
-        resultDiv.textContent = '⚠️ Eroare la trimiterea cererii: ' + err.message;
-      }
-    });
-  </script>
+      const link = document.getElementById("link-generate");
+      link.href = reportUrl;
+      link.classList.remove("d-none");
 
-<%- include('partials/footer') %>
+      // ✅ Afișează secțiunea de ștergere
+      document.getElementById("section-delete").classList.remove("d-none");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      document.getElementById("spinner-generate").classList.add("d-none");
+      setLoading(false);
+    }
+  };
+
+  // 2) Delete All
+  document.getElementById("btn-delete").onclick = async () => {
+    setLoading(true);
+    document.getElementById("spinner-delete").classList.remove("d-none");
+    document.getElementById("text-delete").textContent = "";
+
+    try {
+      const res = await fetch("/simulation/delete-all", { method: "POST" });
+      if (!res.ok) throw new Error("Server error");
+      const { deleted } = await res.json();
+      document.getElementById("text-delete").textContent =
+        `Au fost șterși ${deleted} utilizatori.`;
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      document.getElementById("spinner-delete").classList.add("d-none");
+      setLoading(false);
+    }
+  };
+
+  // 3) Brute-force
+  document.getElementById("btn-bruteforce").onclick = async () => {
+    setLoading(true);
+    document.getElementById("spinner-bruteforce").classList.remove("d-none");
+    document.getElementById("link-bruteforce").classList.add("d-none");
+
+    try {
+      const res = await fetch("/simulation/bruteforce", { method: "POST" });
+      if (!res.ok) throw new Error("Server error");
+      const { reportUrl } = await res.json();
+
+      const link = document.getElementById("link-bruteforce");
+      link.href = reportUrl;
+      link.classList.remove("d-none");
+
+      // ✅ Afișează secțiunea de comparare
+      document.getElementById("section-compare").classList.remove("d-none");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      document.getElementById("spinner-bruteforce").classList.add("d-none");
+      setLoading(false);
+    }
+  };
+
+  // 4) Compare Results
+  document.getElementById("btn-compare").onclick = async () => {
+    setLoading(true);
+    document.getElementById("spinner-compare").classList.remove("d-none");
+    document.getElementById("link-compare").classList.add("d-none");
+
+    try {
+      const res = await fetch("/simulation/compare", { method: "POST" });
+      if (!res.ok) throw new Error("Server error");
+      const { reportUrl } = await res.json();
+
+      const link = document.getElementById("link-compare");
+      link.href = reportUrl;
+      link.classList.remove("d-none");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      document.getElementById("spinner-compare").classList.add("d-none");
+      setLoading(false);
+    }
+  };
+</script>
+
+<%- include("partials/footer") %>

@@ -15,11 +15,19 @@ export async function handleRegister(req, res, isVulnerable = false) {
       hill,
       symmetricKey,
       rsa,
+      affine, // nou: vine ca JSON string din bulkRegister
       affineA,
       affineB,
       bcryptSalt,
-      sha256Salt, // ✅ nou
+      sha256Salt,
     } = req.body;
+
+    // compatibilitate: dacă nu e `affine` complet, construim din A și B
+    const parsedAffine = affine
+      ? typeof affine === "string"
+        ? JSON.parse(affine)
+        : affine
+      : { a: parseInt(affineA), b: parseInt(affineB) };
 
     const {
       encryptionKey,
@@ -31,9 +39,9 @@ export async function handleRegister(req, res, isVulnerable = false) {
       symmetricKey,
       rsa,
       parseInt(caesarKey),
-      { a: parseInt(affineA), b: parseInt(affineB) },
+      parsedAffine,
       parseInt(bcryptSalt),
-      sha256Salt // ✅ nou
+      sha256Salt
     );
 
     const start = Date.now();
@@ -42,9 +50,9 @@ export async function handleRegister(req, res, isVulnerable = false) {
       symmetricKey: symKey,
       rsa,
       caesarKey: parseInt(caesarKey),
-      affine: { a: parseInt(affineA), b: parseInt(affineB) },
+      affine: parsedAffine,
       bcryptSalt: parseInt(bcryptSalt),
-      sha256Salt, // ✅ nou
+      sha256Salt,
     });
     const encryptionTime = Date.now() - start;
 

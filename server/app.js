@@ -1,3 +1,4 @@
+// server/app.js
 import express from "express";
 import config from "./config.js";
 import cookieParser from "cookie-parser";
@@ -8,10 +9,8 @@ import rateLimit from "express-rate-limit";
 // Constante configurabile
 const GLOBAL_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const GLOBAL_LIMIT_MAX = 5000;
-
 const CHANGE_PASSWORD_WINDOW_MS = 15 * 60 * 1000;
 const CHANGE_PASSWORD_MAX = 5;
-
 const SIMULATION_WINDOW_MS = 60 * 1000;
 const SIMULATION_MAX = 10;
 
@@ -45,6 +44,10 @@ const simulationLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Configurare __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Import rute
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
@@ -56,11 +59,11 @@ const app = express();
 // Aplicare limitatori
 app.use(globalLimiter);
 app.use("/change-password", changePasswordLimiter);
-app.use("/simulate-attack", simulationLimiter);
+app.use("/simulation", simulationLimiter);
 
-// Configurare __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Static
+app.use("/reports", express.static(path.join(__dirname, "attack-scripts")));
+app.use(express.static(path.join(__dirname, "../public")));
 
 // Setări Express
 app.set("view engine", "ejs");
@@ -68,7 +71,6 @@ app.set("views", path.join(__dirname, "views"));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "../public")));
 
 // Rute
 app.use("/", publicRoutes);

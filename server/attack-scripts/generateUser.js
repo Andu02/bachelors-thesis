@@ -1,4 +1,3 @@
-// server/attack-scripts/generateUser.js
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -9,28 +8,24 @@ import * as math from "mathjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Dicționar
 const dictPath = path.resolve(__dirname, "100k-most-used-passwords-NCSC.txt");
-const outputPath = path.resolve(__dirname, "1k_user_data_to_encrypt.csv");
+const allPasswords = fs
+  .readFileSync(dictPath, "utf-8")
+  .split(/\r?\n/)
+  .filter(Boolean);
+const letterPasswords = allPasswords.filter((pw) => /^[A-Za-z]+$/.test(pw));
 
-// Metode care trebuie să primească doar parole letter-only
-const letterMethods = new Set(["caesar", "hill", "affine"]);
-
-// Toate metodele suportate
-const methods = ["caesar", "hill", "affine", "ecb", "cbc", "sha256", "bcrypt"];
-const samplesPerMethod = 125;
-
-// --- Generatoare de chei ---
+// Chei random
 function randomCaesarKey() {
   return String(Math.floor(Math.random() * 25) + 1);
 }
-
 function randomAffineKey() {
   const validA = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25];
   const a = validA[Math.floor(Math.random() * validA.length)];
   const b = Math.floor(Math.random() * 26);
   return JSON.stringify({ a, b });
 }
-
 function randomHillKey() {
   let a, b, c, d, det;
   do {
@@ -46,77 +41,76 @@ function randomHillKey() {
     [c, d],
   ]);
 }
-
 function randomHexKey() {
   return crypto.randomBytes(16).toString("hex");
 }
-
 function randomSalt() {
   return crypto.randomBytes(4).toString("hex");
 }
-
 function randomBcryptSalt() {
   return String(Math.floor(Math.random() * 7) + 8);
 }
 
-// --- Încarcă dicționarul ---
-const allPasswords = fs
-  .readFileSync(dictPath, "utf-8")
-  .split(/\r?\n/)
-  .filter(Boolean);
+export default async function generateUsers(count = 1000) {
+  const methods = [
+    "caesar",
+    "hill",
+    "affine",
+    "ecb",
+    "cbc",
+    "sha256",
+    "bcrypt",
+  ];
+  const samplesPerMethod = Math.floor(count / methods.length);
+  const outputFilename = "user_data_to_encrypt.csv";
+  const outputPath = path.resolve(__dirname, outputFilename);
 
-// Filtrăm parolele care conțin doar litere (A–Z, a–z)
-const letterPasswords = allPasswords.filter((pw) => /^[A-Za-z]+$/.test(pw));
+  const output = [["username", "password", "method", "encryption_key"]];
+  let userCounter = 1;
 
-const output = [];
-let userCounter = 1;
+  for (const method of methods) {
+    const pool = (
+      ["caesar", "hill", "affine"].includes(method)
+        ? letterPasswords
+        : allPasswords
+    )
+      .sort(() => 0.5 - Math.random())
+      .slice(0, samplesPerMethod);
 
-// Header CSV
-output.push(["username", "password", "method", "encryption_key"]);
-
-for (const method of methods) {
-  // Alegem pool-ul potrivit
-  const pool = letterMethods.has(method) ? letterPasswords : allPasswords;
-
-  // Selectăm aleator samplesPerMethod parole din pool
-  const selected = pool
-    .sort(() => 0.5 - Math.random())
-    .slice(0, samplesPerMethod);
-
-  for (const password of selected) {
-    const username = `user${userCounter++}`;
-    let encryption_key = "";
-
-    switch (method) {
-      case "caesar":
-        encryption_key = randomCaesarKey();
-        break;
-      case "affine":
-        encryption_key = randomAffineKey();
-        break;
-      case "hill":
-        encryption_key = randomHillKey();
-        break;
-      case "ecb":
-      case "cbc":
-        encryption_key = randomHexKey();
-        break;
-      case "sha256":
-        encryption_key = randomSalt();
-        break;
-      case "bcrypt":
-        encryption_key = randomBcryptSalt();
-        break;
+    for (const password of pool) {
+      const username = `user${userCounter++}`;
+      let encryption_key = "";
+      switch (method) {
+        case "caesar":
+          encryption_key = randomCaesarKey();
+          break;
+        case "affine":
+          encryption_key = randomAffineKey();
+          break;
+        case "hill":
+          encryption_key = randomHillKey();
+          break;
+        case "ecb":
+        case "cbc":
+          encryption_key = randomHexKey();
+          break;
+        case "sha256":
+          encryption_key = randomSalt();
+          break;
+        case "bcrypt":
+          encryption_key = randomBcryptSalt();
+          break;
+      }
+      output.push([username, password, method, encryption_key]);
     }
-
-    output.push([username, password, method, encryption_key]);
   }
+
+  const csvContent = output
+    .map((row) =>
+      row.map((val) => (val.includes(",") ? `"${val}"` : val)).join(",")
+    )
+    .join("\n");
+
+  fs.writeFileSync(outputPath, csvContent, "utf-8");
+  return outputFilename;
 }
-
-// Scrie CSV-ul
-const csvContent = output
-  .map(([u, p, m, k]) => `${u},${p},${m},"${k}"`)
-  .join("\n");
-
-fs.writeFileSync(outputPath, csvContent, "utf-8");
-console.log(`✅ Fișier generat: ${outputPath} (${output.length - 1} intrări)`);

@@ -57,7 +57,17 @@ export function getEncryptionData(
   }
 
   if (method === "affine") {
-    const { a, b } = affine;
+    let a, b;
+    try {
+      const parsed = typeof affine === "string" ? JSON.parse(affine) : affine;
+      a = Number(parsed.a);
+      b = Number(parsed.b);
+    } catch (e) {
+      throw new Error(
+        "Cheia Affine trebuie să fie un obiect JSON valid cu a și b."
+      );
+    }
+
     if (
       typeof a !== "number" ||
       typeof b !== "number" ||

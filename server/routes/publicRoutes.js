@@ -15,4 +15,8 @@ router.get("/success-register", (req, res) => {
   res.render("success-register", { details });
 });
 
+router.get("/simulation", (req, res) => {
+  res.render("simulation");
+});
+
 export default router;

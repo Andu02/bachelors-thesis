@@ -12,17 +12,20 @@ const __dirname = dirname(__filename);
 const dictPath = path.resolve(__dirname, "100k-most-used-passwords-NCSC.txt");
 const outputPath = path.resolve(__dirname, "1k_user_data_to_encrypt.csv");
 
-// Doar metodele suportate pentru parole!
+// Metode care trebuie să primească doar parole letter-only
+const letterMethods = new Set(["caesar", "hill", "affine"]);
+
+// Toate metodele suportate
 const methods = ["caesar", "hill", "affine", "ecb", "cbc", "sha256", "bcrypt"];
 const samplesPerMethod = 125;
 
-// --- Funcții de generare a cheilor pentru fiecare metodă ---
+// --- Generatoare de chei ---
 function randomCaesarKey() {
   return String(Math.floor(Math.random() * 25) + 1);
 }
 
 function randomAffineKey() {
-  const validA = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25]; // prime cu 26
+  const validA = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25];
   const a = validA[Math.floor(Math.random() * validA.length)];
   const b = Math.floor(Math.random() * 26);
   return JSON.stringify({ a, b });
@@ -53,24 +56,30 @@ function randomSalt() {
 }
 
 function randomBcryptSalt() {
-  return String(Math.floor(Math.random() * 7) + 8); // între 8 și 14
+  return String(Math.floor(Math.random() * 7) + 8);
 }
 
-// --- Încarcă parolele din dicționar ---
-const passwords = fs
+// --- Încarcă dicționarul ---
+const allPasswords = fs
   .readFileSync(dictPath, "utf-8")
   .split(/\r?\n/)
   .filter(Boolean);
 
+// Filtrăm parolele care conțin doar litere (A–Z, a–z)
+const letterPasswords = allPasswords.filter((pw) => /^[A-Za-z]+$/.test(pw));
+
 const output = [];
 let userCounter = 1;
 
-// --- Adaugă header pentru CSV! ---
+// Header CSV
 output.push(["username", "password", "method", "encryption_key"]);
 
 for (const method of methods) {
-  // Selectăm aleator 125 parole per metodă
-  const selected = passwords
+  // Alegem pool-ul potrivit
+  const pool = letterMethods.has(method) ? letterPasswords : allPasswords;
+
+  // Selectăm aleator samplesPerMethod parole din pool
+  const selected = pool
     .sort(() => 0.5 - Math.random())
     .slice(0, samplesPerMethod);
 
@@ -104,10 +113,10 @@ for (const method of methods) {
   }
 }
 
-// --- Scrie CSV cu header ---
+// Scrie CSV-ul
 const csvContent = output
   .map(([u, p, m, k]) => `${u},${p},${m},"${k}"`)
   .join("\n");
 
 fs.writeFileSync(outputPath, csvContent, "utf-8");
-console.log(`✅ Fișier generat: ${outputPath}`);
+console.log(`✅ Fișier generat: ${outputPath} (${output.length - 1} intrări)`);

@@ -1,52 +1,65 @@
-// Criptare ECB cu cheie personalizată
-export function encrypt(text, key = "DEFAULT") {
-  key = key.toUpperCase(); // convertim cheia la majuscule pentru shift-uri previzibile (ASCII A–Z)
+// server/crypto-methods/cbc.js
+import crypto from "crypto";
+import { getKeyBuffer } from "../utils/utils.js";
 
-  const cleaned = text.replace(/[^A-Z]/gi, "").toUpperCase(); // eliminăm caracterele non-AZ
-  let result = "";
-  const blockSize = 4;
+export function encrypt(text, keyHex) {
+  const key = getKeyBuffer(keyHex);
+  const blockSize = 16;
 
-  for (let i = 0; i < cleaned.length; i += blockSize) {
-    const block = cleaned.slice(i, i + blockSize);
-    result += blockEncrypt(block, key); // criptăm fiecare bloc
+  const buf = Buffer.from(text, "utf8");
+  const padLen = blockSize - (buf.length % blockSize || blockSize);
+  const padding = Buffer.alloc(padLen, padLen);
+  const input = Buffer.concat([buf, padding]);
+
+  let prev = key.slice(0, blockSize);
+  const out = [];
+
+  for (let off = 0; off < input.length; off += blockSize) {
+    const block = input.slice(off, off + blockSize);
+
+    const xored = Buffer.alloc(blockSize);
+    for (let i = 0; i < blockSize; i++) {
+      xored[i] = block[i] ^ prev[i];
+    }
+
+    const cipher = crypto.createCipheriv("aes-128-ecb", key, null);
+    cipher.setAutoPadding(false);
+    const enc = Buffer.concat([cipher.update(xored), cipher.final()]);
+
+    out.push(enc);
+    prev = enc;
   }
 
-  return result;
+  return Buffer.concat(out).toString("hex");
 }
 
-// Decriptare ECB cu aceeași cheie
-export function decrypt(text, key = "DEFAULT") {
-  const cleaned = text.replace(/[^A-Z]/gi, "").toUpperCase();
-  let result = "";
-  const blockSize = 4;
+export function decrypt(cipherHex, keyHex) {
+  const key = getKeyBuffer(keyHex);
+  const blockSize = 16;
+  const data = Buffer.from(cipherHex, "hex");
 
-  for (let i = 0; i < cleaned.length; i += blockSize) {
-    const block = cleaned.slice(i, i + blockSize);
-    result += blockDecrypt(block, key); // decriptăm fiecare bloc
+  let prev = key.slice(0, blockSize);
+  const blocks = [];
+
+  for (let off = 0; off < data.length; off += blockSize) {
+    const block = data.slice(off, off + blockSize);
+
+    const decipher = crypto.createDecipheriv("aes-128-ecb", key, null);
+    decipher.setAutoPadding(false);
+    const xored = Buffer.concat([decipher.update(block), decipher.final()]);
+
+    const plainBlock = Buffer.alloc(blockSize);
+    for (let i = 0; i < blockSize; i++) {
+      plainBlock[i] = xored[i] ^ prev[i];
+    }
+
+    blocks.push(plainBlock);
+    prev = block;
   }
 
-  return result;
-}
+  const padded = Buffer.concat(blocks);
+  const padLen = padded[padded.length - 1];
+  const plain = padded.slice(0, padded.length - padLen);
 
-// Criptare pe bloc individual
-function blockEncrypt(block, key) {
-  let result = "";
-  for (let i = 0; i < block.length; i++) {
-    const shift = key.charCodeAt(i % key.length) % 26;
-    const code = (block.charCodeAt(i) - 65 + shift) % 26;
-    result += String.fromCharCode(code + 65);
-  }
-
-  return result;
-}
-
-// Decriptare pe bloc individual
-function blockDecrypt(block, key) {
-  let result = "";
-  for (let i = 0; i < block.length; i++) {
-    const shift = key.charCodeAt(i % key.length) % 26;
-    const code = (block.charCodeAt(i) - 65 - shift + 26) % 26;
-    result += String.fromCharCode(code + 65);
-  }
-  return result;
+  return plain.toString("utf8");
 }

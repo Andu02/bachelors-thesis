@@ -18,11 +18,13 @@ fs.createReadStream(csvPath)
   .on("end", async () => {
     console.log(`📤 Trimit ${users.length} utilizatori către server...\n`);
 
+    let successCount = 0;
+    let failureCount = 0;
+
     for (const user of users) {
       let { username, password, method, encryption_key } = user;
       method = method?.replace(/^"|"$/g, ""); // curăță ghilimele dacă există
 
-      // *** Sare peste orice linie goală sau necunoscută ***
       if (
         !method ||
         ![
@@ -41,7 +43,6 @@ fs.createReadStream(csvPath)
         continue;
       }
 
-      // Inițializează payloadul cu toate cheile așteptate de backend
       const payload = {
         username,
         password,
@@ -56,49 +57,55 @@ fs.createReadStream(csvPath)
         sha256Salt: null,
       };
 
-      try {
-        switch (method) {
-          case "caesar":
-            payload.caesarKey = parseInt(encryption_key);
-            break;
-
-          case "hill":
-            payload.hill = encryption_key; // JSON string (ex: [[3,3],[2,5]])
-            break;
-
-          case "affine": {
-            const { a, b } = JSON.parse(encryption_key);
-            payload.affineA = a;
-            payload.affineB = b;
-            break;
-          }
-
-          case "ecb":
-          case "cbc":
-            payload.symmetricKey = encryption_key;
-            break;
-
-          case "sha256":
-            payload.sha256Salt = encryption_key;
-            break;
-
-          case "bcrypt":
-            payload.bcryptSalt = parseInt(encryption_key);
-            break;
+      switch (method) {
+        case "caesar":
+          payload.caesarKey = parseInt(encryption_key, 10);
+          break;
+        case "hill":
+          payload.hill = encryption_key;
+          break;
+        case "affine": {
+          const { a, b } = JSON.parse(encryption_key);
+          payload.affineA = a;
+          payload.affineB = b;
+          break;
         }
+        case "ecb":
+        case "cbc":
+          payload.symmetricKey = encryption_key;
+          break;
+        case "sha256":
+          payload.sha256Salt = encryption_key;
+          break;
+        case "bcrypt":
+          payload.bcryptSalt = parseInt(encryption_key, 10);
+          break;
+      }
 
+      try {
         const res = await fetch(SERVER_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-
         const text = await res.text();
-        console.log(`[${res.status}] ${username}: ${text}`);
+
+        if (res.ok) {
+          successCount++;
+        } else {
+          failureCount++;
+          console.error(`[${res.status}] ${username}: ${text}`);
+        }
       } catch (err) {
-        console.error(`[Eroare] ${username}:`, err.message);
+        failureCount++;
+        console.error(`[Eroare] ${username}: ${err.message}`);
       }
     }
 
-    console.log("\n✅ Înregistrare completă.");
+    console.log(
+      `\n✅ Înregistrare completă: ${successCount}/${users.length} conturi create cu succes.`
+    );
+    if (failureCount > 0) {
+      console.log(`⚠️ ${failureCount} conturi nu au fost create cu succes.`);
+    }
   });

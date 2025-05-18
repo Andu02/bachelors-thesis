@@ -1,4 +1,5 @@
 import { isHillMatrixValid } from "../crypto-methods/hill.js";
+import crypto from "crypto";
 
 export function getEncryptionData(
   method,
@@ -176,4 +177,15 @@ export function determinant(matrix) {
     det += (col % 2 === 0 ? 1 : -1) * matrix[0][col] * determinant(subMatrix);
   }
   return det;
+}
+
+export function getKeyBuffer(keyHex) {
+  if (/^[0-9a-fA-F]{32}$/.test(keyHex)) {
+    return Buffer.from(keyHex, "hex");
+  }
+  return crypto
+    .createHash("sha256")
+    .update(keyHex, "utf8")
+    .digest()
+    .slice(0, 16);
 }

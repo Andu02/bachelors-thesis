@@ -62,7 +62,7 @@ app.use("/change-password", changePasswordLimiter);
 app.use("/simulation", simulationLimiter);
 
 // Static
-app.use("/reports", express.static(path.join(__dirname, "attack-scripts")));
+app.use("/reports", express.static(path.join(__dirname, "public/reports")));
 app.use(express.static(path.join(__dirname, "../public")));
 
 // Setări Express

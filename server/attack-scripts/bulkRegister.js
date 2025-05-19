@@ -1,22 +1,39 @@
+// ============================
+// Importuri necesare
+// ============================
 import fs from "fs";
 import path from "path";
 import csvParser from "csv-parser";
 import fetch from "node-fetch";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { getReportPath, writeCsv } from "../utils/utils.js";
+import config from "../config.js";
 
+// ============================
+// Setare __dirname
+// ============================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const SERVER_URL = "http://localhost:3000/vuln-register";
 
+// ============================
+// Endpoint backend
+// ============================
+const SERVER_URL = config.serverUrl + "/vuln-register";
+
+// ============================
+// Funcția principală de înregistrare bulk
+// ============================
 export default async function bulkRegister(
   csvFile = "user_data_to_encrypt.csv"
 ) {
-  const csvPath = path.resolve(__dirname, csvFile);
+  const csvPath = path.resolve(__dirname, "../../public/reports", csvFile);
+
   if (!fs.existsSync(csvPath)) {
     throw new Error(`bulkRegister: fișier inexistent ${csvPath}`);
   }
 
+  // Încarcă utilizatorii din CSV
   const users = [];
   await new Promise((resolve, reject) => {
     fs.createReadStream(csvPath)
@@ -26,11 +43,16 @@ export default async function bulkRegister(
       .on("error", reject);
   });
 
+  // Pregătește raportul CSV
+  const { reportName, reportPath } = getReportPath("bulk_register_report");
+  const logLines = [["username", "method", "status", "error_message"]];
+
   let success = 0,
     failure = 0;
   for (const { username, password, method, encryption_key } of users) {
     if (!method) {
       console.warn("bulkRegister: metodă necunoscută", method);
+      logLines.push([username, method || "?", "error", "Metodă necunoscută"]);
       continue;
     }
 
@@ -59,6 +81,8 @@ export default async function bulkRegister(
           break;
         default:
           console.warn("bulkRegister: metodă necunoscută", method);
+          logLines.push([username, method, "error", "Metodă necunoscută"]);
+          failure++;
           continue;
       }
 
@@ -70,18 +94,25 @@ export default async function bulkRegister(
 
       if (res.ok) {
         success++;
+        logLines.push([username, method, "success", ""]);
       } else {
+        const msg = await res.text();
         failure++;
-        console.error(`[${res.status}] ${username}: ${await res.text()}`);
+        logLines.push([username, method, "error", msg]);
+        console.error(`[${res.status}] ${username}: ${msg}`);
       }
     } catch (err) {
       failure++;
+      logLines.push([username, method, "error", err.message]);
       console.error(`[Eroare] ${username}: ${err.message}`);
     }
   }
 
+  // Scrie raportul CSV
+  writeCsv(reportPath, logLines);
   console.log(
     `✅ bulkRegister: ${success}/${users.length} OK, ${failure} eșecuri.`
   );
-  return csvFile;
+  console.log(`✅ Raport bulkRegister salvat în ${reportPath}`);
+  return reportName;
 }

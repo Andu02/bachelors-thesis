@@ -11,6 +11,7 @@ const {
   DB_HOST,
   DB_NAME,
   DB_PORT,
+  SERVER_URL,
 } = process.env;
 
 if (!JWT_SECRET) {
@@ -29,6 +30,7 @@ export default {
   jwtSecret: JWT_SECRET,
   databaseUrl: DATABASE_URL,
   port: parseInt(PORT, 10) || 3000,
+  serverUrl: SERVER_URL || `http://localhost:${PORT}`,
   db: {
     user: DB_USER,
     password: DB_PASS,

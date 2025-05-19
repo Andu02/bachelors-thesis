@@ -1,22 +1,38 @@
+// ============================
+// Importuri necesare
+// ============================
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import crypto from "crypto";
 import * as math from "mathjs";
+import pool from "../db.js";
+import { getReportPath, writeCsv } from "../utils/utils.js";
 
+// ============================
+// Setare __dirname
+// ============================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Dicționar
-const dictPath = path.resolve(__dirname, "100k-most-used-passwords-NCSC.txt");
+// ============================
+// Dicționar parole (din public/reports)
+// ============================
+const dictPath = path.resolve(
+  __dirname,
+  "../../public/reports",
+  "100k-most-used-passwords-NCSC.txt"
+);
 const allPasswords = fs
   .readFileSync(dictPath, "utf-8")
   .split(/\r?\n/)
   .filter(Boolean);
 const letterPasswords = allPasswords.filter((pw) => /^[A-Za-z]+$/.test(pw));
 
-// Chei random
+// ============================
+// Generatoare de chei random
+// ============================
 function randomCaesarKey() {
   return String(Math.floor(Math.random() * 25) + 1);
 }
@@ -51,6 +67,9 @@ function randomBcryptSalt() {
   return String(Math.floor(Math.random() * 7) + 8);
 }
 
+// ============================
+// Funcția principală
+// ============================
 export default async function generateUsers(count = 1000) {
   const methods = [
     "caesar",
@@ -62,11 +81,28 @@ export default async function generateUsers(count = 1000) {
     "bcrypt",
   ];
   const samplesPerMethod = Math.floor(count / methods.length);
-  const outputFilename = "user_data_to_encrypt.csv";
-  const outputPath = path.resolve(__dirname, outputFilename);
 
-  const output = [["username", "password", "method", "encryption_key"]];
+  // ============================
+  // Determină numărul de la care continuăm numerotarea
+  // ============================
   let userCounter = 1;
+  try {
+    const [result] = await pool.query(
+      "SELECT MAX(CAST(SUBSTRING(username, 5) AS UNSIGNED)) AS last_id FROM users WHERE username LIKE 'user%';"
+    );
+    const lastId = result[0]?.last_id;
+    if (lastId !== null && !isNaN(lastId)) {
+      userCounter = lastId + 1;
+    }
+  } catch (err) {
+    console.warn("⚠️ Nu s-a putut obține ultimul ID din DB:", err.message);
+  }
+
+  // ============================
+  // Pregătește salvarea CSV
+  // ============================
+  const { reportName, reportPath } = getReportPath("user_data_to_encrypt");
+  const output = [["username", "password", "method", "encryption_key"]];
 
   for (const method of methods) {
     const pool = (
@@ -101,16 +137,21 @@ export default async function generateUsers(count = 1000) {
           encryption_key = randomBcryptSalt();
           break;
       }
-      output.push([username, password, method, encryption_key]);
+
+      // ============================
+      // Transformă parola doar dacă e metodă pe litere
+      // ============================
+      const adjustedPassword = ["caesar", "hill", "affine"].includes(method)
+        ? password.toUpperCase()
+        : password;
+
+      output.push([username, adjustedPassword, method, encryption_key]);
     }
   }
 
-  const csvContent = output
-    .map((row) =>
-      row.map((val) => (val.includes(",") ? `"${val}"` : val)).join(",")
-    )
-    .join("\n");
-
-  fs.writeFileSync(outputPath, csvContent, "utf-8");
-  return outputFilename;
+  // ============================
+  // Scrie fișierul CSV
+  // ============================
+  writeCsv(reportPath, output);
+  return reportName;
 }

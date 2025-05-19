@@ -1,5 +1,8 @@
 import { isHillMatrixValid } from "../crypto-methods/hill.js";
 import crypto from "crypto";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 
 export function getEncryptionData(
   method,
@@ -198,4 +201,18 @@ export function getKeyBuffer(keyHex) {
     .update(keyHex, "utf8")
     .digest()
     .slice(0, 16);
+}
+
+export function getReportPath(name, dir = "../../public/reports") {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const reportName = `${name}.csv`;
+  const reportPath = path.resolve(__dirname, dir, reportName);
+  return { reportName, reportPath };
+}
+export function writeCsv(pathToFile, lines) {
+  const content = lines
+    .map((row) => row.map((val) => `"${val.replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+  fs.writeFileSync(pathToFile, content, "utf-8");
 }

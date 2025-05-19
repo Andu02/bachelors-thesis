@@ -1,36 +1,47 @@
+// ============================
+// Importuri necesare
+// ============================
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import pool from "../db.js"; // ✅ adăugat
+import pool from "../db.js";
+import { getReportPath, writeCsv } from "../utils/utils.js";
 
+// ============================
+// Setare __dirname
+// ============================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// ============================
+// Funcția principală: extrage utilizatori din DB
+// ============================
 export default async function dumpUsers() {
   const result = await pool.query(
     "SELECT username, password, method, encryption_key FROM users ORDER BY id"
   );
+
   if (result.rows.length === 0) {
     throw new Error("Nu există utilizatori în baza de date.");
   }
 
-  const reportName = "users_dump.csv";
-  const reportPath = path.resolve(__dirname, reportName);
-
-  const header = "username,password,method,encryption_key";
-  const lines = result.rows
+  // Pregătește rândurile CSV
+  const lines = [["username", "password", "method", "encryption_key"]];
+  result.rows
     .filter((r) => !["vigenere", "rsa"].includes(r.method))
-    .map((r) => {
+    .forEach((r) => {
       const ek =
         typeof r.encryption_key === "string"
           ? r.encryption_key
           : JSON.stringify(r.encryption_key);
-      const esk = ek.replace(/"/g, '""');
-      return `${r.username},${r.password},${r.method},"${esk}"`;
+      lines.push([r.username, r.password, r.method, ek]);
     });
 
-  fs.writeFileSync(reportPath, [header, ...lines].join("\n"), "utf-8");
-  console.log(`✅ Dump generat: ${reportPath} (${lines.length} intrări)`);
+  // Scrie raportul CSV
+  const { reportName, reportPath } = getReportPath("users_dump");
+  writeCsv(reportPath, lines);
+
+  console.log(`✅ Dump generat: ${reportPath} (${lines.length - 1} intrări)`);
   return reportName;
 }

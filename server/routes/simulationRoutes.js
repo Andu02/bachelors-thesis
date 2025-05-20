@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import generateUsers from "../attack-scripts/generateUser.js";
+import generateUsers from "../attack-scripts/generateUsers.js";
 import bulkRegister from "../attack-scripts/bulkRegister.js";
 import deleteAllUsers from "../attack-scripts/deleteAllUsers.js";
 import dumpUsers from "../attack-scripts/generateUsersDump.js";

@@ -9,7 +9,7 @@ import csvParser from "csv-parser";
 import fetch from "node-fetch";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import dbPool from "../db.js"; // import corect
+import pool from "../db.js"; // import corect
 import { getReportPath, writeCsv } from "../utils/utils.js";
 import config from "../config.js";
 
@@ -57,7 +57,7 @@ export default async function bulkRegister(
     // Pre-check în baza de date
     // ============================
     try {
-      const result = await dbPool.query(
+      const result = await pool.query(
         "SELECT 1 FROM users WHERE username = $1",
         [username]
       );

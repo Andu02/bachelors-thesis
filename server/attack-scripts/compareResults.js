@@ -1,3 +1,5 @@
+// server/attack-scripts/compareResults.js
+
 // ============================
 // Importuri necesare
 // ============================
@@ -17,6 +19,7 @@ const __dirname = dirname(__filename);
 // Funcția principală de comparare
 // ============================
 export default function compareResults() {
+  // Căi fixe către fișierele CSV
   const userDataPath = path.resolve(
     __dirname,
     "../../public/reports/user_data_to_encrypt.csv"
@@ -26,38 +29,43 @@ export default function compareResults() {
     "../../public/reports/bruteforce_results.csv"
   );
 
-  // Verificare fișiere existență
+  // Verificare existență fișiere
   for (const p of [userDataPath, bruteResPath]) {
     if (!fs.existsSync(p)) throw new Error(`❌ Fișier inexistent: ${p}`);
   }
 
+  // ============================
   // Parse user data
+  // ============================
   const users = {};
   const userLines = fs
     .readFileSync(userDataPath, "utf8")
     .split(/\r?\n/)
     .filter(Boolean);
-  userLines.shift();
+  userLines.shift(); // skip header
+
   for (const line of userLines) {
-    const parts = line.split(",");
+    // splităm simplu, apoi curățăm ghilimelele
+    const parts = line.split(",").map((p) => p.replace(/^"+|"+$/g, ""));
     const username = parts[0];
     const originalPassword = parts[1];
     const method = parts[2];
-    let encryption_key = parts.slice(3).join(",");
-    encryption_key = encryption_key.replace(/^"|"$/g, "").replace(/""/g, '"');
+    const encryption_key = parts.slice(3).join(","); // oricâte virgule ar avea
     users[username] = { originalPassword, method, encryption_key };
   }
 
+  // ============================
   // Parse brute-force results
+  // ============================
   const bruteLines = fs
     .readFileSync(bruteResPath, "utf8")
     .split(/\r?\n/)
     .filter(Boolean);
-  bruteLines.shift();
+  bruteLines.shift(); // skip header
 
   let nMatch = 0,
     nTotal = 0;
-  const lines = [
+  const outputLines = [
     [
       "username",
       "method",
@@ -68,10 +76,11 @@ export default function compareResults() {
   ];
 
   for (const line of bruteLines) {
-    const cols = line.split(",");
+    const cols = line.split(",").map((p) => p.replace(/^"+|"+$/g, ""));
     const username = cols[0];
     const method = cols[1];
-    let crackedPassword = cols[4];
+    // parola spartă poate fi în coloana 4 sau 5, după cum apare în CSV
+    let crackedPassword = cols[4] || cols[3] || "";
     const u = users[username];
     if (!u) continue;
 
@@ -87,10 +96,14 @@ export default function compareResults() {
     }
 
     nTotal++;
-    if (u.originalPassword.toLowerCase() === crackedPassword.toLowerCase()) {
+    // comparăm case-insensitive
+    if (
+      u.originalPassword.trim().toLowerCase() ===
+      crackedPassword.trim().toLowerCase()
+    ) {
       nMatch++;
     } else {
-      lines.push([
+      outputLines.push([
         username,
         method,
         u.originalPassword,
@@ -100,11 +113,13 @@ export default function compareResults() {
     }
   }
 
-  lines.push([]);
-  lines.push([`# Potriviri (case-insensitive): ${nMatch} / ${nTotal}`]);
+  // Adăugăm statistica de potriviri
+  outputLines.push([]);
+  outputLines.push([`# Potriviri (case-insensitive): ${nMatch} / ${nTotal}`]);
 
+  // Scrie raportul final
   const { reportName, reportPath } = getReportPath("compareResults_report");
-  writeCsv(reportPath, lines);
+  writeCsv(reportPath, outputLines);
   console.log(`✅ Raport comparare salvat în ${reportPath}`);
   return reportName;
 }

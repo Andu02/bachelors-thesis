@@ -1,3 +1,5 @@
+// server/attack-scripts/bulkRegister.js
+
 // ============================
 // Importuri necesare
 // ============================
@@ -7,6 +9,7 @@ import csvParser from "csv-parser";
 import fetch from "node-fetch";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import dbPool from "../db.js"; // import corect
 import { getReportPath, writeCsv } from "../utils/utils.js";
 import config from "../config.js";
 
@@ -50,6 +53,24 @@ export default async function bulkRegister(
   let success = 0,
     failure = 0;
   for (const { username, password, method, encryption_key } of users) {
+    // ============================
+    // Pre-check în baza de date
+    // ============================
+    try {
+      const result = await dbPool.query(
+        "SELECT 1 FROM users WHERE username = $1",
+        [username]
+      );
+      if (result.rows.length > 0) {
+        console.log(`⏭️ Sărim peste ${username}: există deja.`);
+        logLines.push([username, method, "skipped", "username deja existent"]);
+        continue;
+      }
+    } catch (err) {
+      console.warn(`⚠️ Eroare la pre-check pentru ${username}:`, err.message);
+      // continuăm înregistrarea, poate funcționează API-ul
+    }
+
     if (!method) {
       console.warn("bulkRegister: metodă necunoscută", method);
       logLines.push([username, method || "?", "error", "Metodă necunoscută"]);

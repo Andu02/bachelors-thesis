@@ -38,4 +38,21 @@ export default {
     database: DB_NAME,
     port: parseInt(DB_PORT, 10),
   },
+  // *** Adăugat: rate limit settings ***
+  rateLimits: {
+    global: {
+      windowMs:
+        parseInt(process.env.RATE_LIMIT_GLOBAL_WINDOW_MS, 10) || 15 * 60 * 1000,
+      max: parseInt(process.env.RATE_LIMIT_GLOBAL_MAX, 10) || 5000,
+    },
+    changePassword: {
+      windowMs:
+        parseInt(process.env.RATE_LIMIT_CP_WINDOW_MS, 10) || 15 * 60 * 1000,
+      max: parseInt(process.env.RATE_LIMIT_CP_MAX, 10) || 5,
+    },
+    simulation: {
+      windowMs: parseInt(process.env.RATE_LIMIT_SIM_WINDOW_MS, 10) || 60 * 1000,
+      max: parseInt(process.env.RATE_LIMIT_SIM_MAX, 10) || 10,
+    },
+  },
 };

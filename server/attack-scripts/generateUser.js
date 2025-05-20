@@ -1,3 +1,5 @@
+// server/attack-scripts/generateUsers.js
+
 // ============================
 // Importuri necesare
 // ============================
@@ -7,7 +9,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import crypto from "crypto";
 import * as math from "mathjs";
-import pool from "../db.js";
+import dbPool from "../db.js";
 import { getReportPath, writeCsv } from "../utils/utils.js";
 
 // ============================
@@ -36,12 +38,14 @@ const letterPasswords = allPasswords.filter((pw) => /^[A-Za-z]+$/.test(pw));
 function randomCaesarKey() {
   return String(Math.floor(Math.random() * 25) + 1);
 }
+
 function randomAffineKey() {
   const validA = [1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23, 25];
   const a = validA[Math.floor(Math.random() * validA.length)];
   const b = Math.floor(Math.random() * 26);
   return JSON.stringify({ a, b });
 }
+
 function randomHillKey() {
   let a, b, c, d, det;
   do {
@@ -57,12 +61,15 @@ function randomHillKey() {
     [c, d],
   ]);
 }
+
 function randomHexKey() {
   return crypto.randomBytes(16).toString("hex");
 }
+
 function randomSalt() {
   return crypto.randomBytes(4).toString("hex");
 }
+
 function randomBcryptSalt() {
   return String(Math.floor(Math.random() * 7) + 8);
 }
@@ -80,17 +87,27 @@ export default async function generateUsers(count = 1000) {
     "sha256",
     "bcrypt",
   ];
-  const samplesPerMethod = Math.floor(count / methods.length);
+
+  // Calculează distribuția egală
+  const base = Math.floor(count / methods.length);
+  const remainder = count % methods.length;
 
   // ============================
   // Determină numărul de la care continuăm numerotarea
   // ============================
   let userCounter = 1;
   try {
-    const [result] = await pool.query(
-      "SELECT MAX(CAST(SUBSTRING(username, 5) AS UNSIGNED)) AS last_id FROM users WHERE username LIKE 'user%';"
+    const result = await dbPool.query(
+      `SELECT MAX(
+         CAST(
+           SUBSTRING(username FROM 5)
+           AS INTEGER
+         )
+       ) AS last_id
+       FROM users
+       WHERE username LIKE 'user%';`
     );
-    const lastId = result[0]?.last_id;
+    const lastId = result.rows[0]?.last_id;
     if (lastId !== null && !isNaN(lastId)) {
       userCounter = lastId + 1;
     }
@@ -103,18 +120,33 @@ export default async function generateUsers(count = 1000) {
   // ============================
   const { reportName, reportPath } = getReportPath("user_data_to_encrypt");
   const output = [["username", "password", "method", "encryption_key"]];
+  const seenUsernames = new Set();
 
-  for (const method of methods) {
-    const pool = (
+  // Pentru fiecare metodă, ia exact `base` elemente și distribuie restul primelor `remainder` metode
+  for (let idx = 0; idx < methods.length; idx++) {
+    const method = methods[idx];
+    const take = base + (idx < remainder ? 1 : 0);
+
+    const passwords = (
       ["caesar", "hill", "affine"].includes(method)
         ? letterPasswords
         : allPasswords
     )
       .sort(() => 0.5 - Math.random())
-      .slice(0, samplesPerMethod);
+      .slice(0, take);
 
-    for (const password of pool) {
+    for (const password of passwords) {
       const username = `user${userCounter++}`;
+
+      // ============================
+      // Sanity-check pentru duplicate
+      // ============================
+      if (seenUsernames.has(username)) {
+        console.error(`EROARE: username duplicat generat -> ${username}`);
+        continue;
+      }
+      seenUsernames.add(username);
+
       let encryption_key = "";
       switch (method) {
         case "caesar":

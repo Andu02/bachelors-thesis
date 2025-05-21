@@ -11,6 +11,14 @@
   <!-- Stiluri -->
   <link rel="stylesheet" href="/styles/style.css" />
   <link rel="stylesheet" href="/styles/theme-change.css" />
+
+  <!-- Aplica dark-mode inca din <head>, inainte de randarea paginii -->
+  <script>
+    if (localStorage.getItem("dark-mode") === "1") {
+      document.documentElement.classList.add("dark-mode");
+    }
+  </script>
+
 </head>
 <body class="bg-light d-flex flex-column justify-content-center align-items-center min-vh-100">
 

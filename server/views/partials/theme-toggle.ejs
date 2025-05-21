@@ -1,4 +1,11 @@
 <div id="theme-toggle" class="theme-switch">
-  <input type="checkbox" id="toggle-checkbox" hidden />
+  <script>
+    // ✅ Scriem checkbox-ul direct cu checked="checked" dacă dark-mode este activ
+    document.write(
+      `<input type="checkbox" id="toggle-checkbox" hidden ${
+        localStorage.getItem("dark-mode") === "1" ? "checked" : ""
+      }>`
+    );
+  </script>
   <label for="toggle-checkbox" class="switch-label"></label>
 </div>

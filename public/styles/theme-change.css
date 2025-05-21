@@ -1,5 +1,5 @@
 /* =============================== */
-/* Comutator temă - stil vizual   */
+/* Comutator temă - fără tranziție */
 /* =============================== */
 
 .theme-switch {
@@ -20,11 +20,6 @@
   background-size: cover;
 }
 
-/* ✅ Tranziție activă doar când html are clasa .transition-enabled */
-html.transition-enabled .switch-label {
-  transition: background 0.4s ease;
-}
-
 .switch-label::after {
   content: "";
   position: absolute;
@@ -34,15 +29,9 @@ html.transition-enabled .switch-label {
   height: 32px;
   background: white;
   border-radius: 50%;
-  transition: transform 0.3s;
 }
 
-/* ✅ Previne mișcarea animată a bulinei la refresh */
-html:not(.transition-enabled) .switch-label::after {
-  transition: none !important;
-}
-
-/* ✅ Culoare fundal și mișcare bulină când comutatorul este activat */
+/* Stare activă (dark mode) */
 #toggle-checkbox:checked + .switch-label {
   background: #1a237e;
   background-size: cover;
@@ -50,16 +39,6 @@ html:not(.transition-enabled) .switch-label::after {
 
 #toggle-checkbox:checked + .switch-label::after {
   transform: translateX(40px);
-}
-
-/* =============================== */
-/* Tranziție pe restul elementelor */
-/* =============================== */
-
-html.dark-mode.transition-enabled *,
-html.dark-mode.transition-enabled *::before,
-html.dark-mode.transition-enabled *::after {
-  transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease !important;
 }
 
 /* =============================== */
@@ -71,7 +50,7 @@ html.dark-mode {
   color: #f5f5f5 !important;
 }
 
-/* ✅ Pentru pagini cu body.bg-light */
+/* ✅ Suport pentru body.bg-light */
 html.dark-mode body.bg-light {
   background-color: #0d0d0d !important;
   color: #f5f5f5 !important;

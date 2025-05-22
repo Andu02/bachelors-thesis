@@ -1,5 +1,3 @@
-// server/attack-scripts/generateUsersDumps.js
-
 // ============================
 // Importuri necesare
 // ============================

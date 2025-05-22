@@ -1,12 +1,20 @@
-// server/utils/handleRegister.js
+// ============================
+// Importuri necesare
+// ============================
 import jwt from "jsonwebtoken";
 import pool from "../db.js";
 import config from "../config.js";
 import { encryptPassword } from "./cryptoRouter.js";
 import { getEncryptionData } from "./utils.js";
 
+// ============================
+// Funcția principală pentru înregistrare
+// ============================
 export async function handleRegister(req, res, isVulnerable = false) {
   try {
+    // ============================
+    // Extragem datele trimise din request
+    // ============================
     const {
       username,
       password,
@@ -15,20 +23,25 @@ export async function handleRegister(req, res, isVulnerable = false) {
       hill,
       symmetricKey,
       rsa,
-      affine, // nou: vine ca JSON string din bulkRegister
+      affine,
       affineA,
       affineB,
       bcryptSalt,
       sha256Salt,
     } = req.body;
 
-    // compatibilitate: dacă nu e `affine` complet, construim din A și B
+    // ============================
+    // Procesăm cheia pentru cifrul affine
+    // ============================
     const parsedAffine = affine
       ? typeof affine === "string"
         ? JSON.parse(affine)
         : affine
       : { a: parseInt(affineA), b: parseInt(affineB) };
 
+    // ============================
+    // Obținem datele de criptare în funcție de metodă
+    // ============================
     const {
       encryptionKey,
       hillMatrix,
@@ -44,6 +57,9 @@ export async function handleRegister(req, res, isVulnerable = false) {
       sha256Salt
     );
 
+    // ============================
+    // Criptăm parola și măsurăm timpul de execuție
+    // ============================
     const start = Date.now();
     const encryptedPassword = await encryptPassword(method, password, {
       hillKey: hillMatrix,
@@ -56,14 +72,23 @@ export async function handleRegister(req, res, isVulnerable = false) {
     });
     const encryptionTime = Date.now() - start;
 
+    // ============================
+    // Inserăm utilizatorul și parola criptată în baza de date
+    // ============================
     await pool.query(
       "INSERT INTO users (username, password, method, encryption_key) VALUES ($1, $2, $3, $4)",
       [username, encryptedPassword, method, encryptionKey]
     );
 
+    // ============================
+    // Generăm token JWT și îl setăm în cookie
+    // ============================
     const token = jwt.sign({ username }, config.jwtSecret, { expiresIn: "1h" });
     res.cookie("authToken", token, { httpOnly: true });
 
+    // ============================
+    // Setăm cookie cu detalii pentru debug sau afișare client
+    // ============================
     res.cookie(
       "registrationDetails",
       JSON.stringify({

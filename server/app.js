@@ -69,7 +69,7 @@ app.use("/", simulationRoutes);
 // Rută de testare conectivitate
 // ============================
 app.get("/ping", (req, res) => {
-  res.send("Serverul funcționează!");
+  res.send("Serverul funcționează!\n");
 });
 
 // ============================
@@ -83,5 +83,5 @@ app.use((req, res) => {
 // Start server
 // ============================
 app.listen(config.port, () => {
-  console.log(`Serverul rulează pe ${config.serverUrl}`);
+  console.log(`Serverul rulează pe ${config.serverUrl}\n`);
 });

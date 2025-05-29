@@ -66,7 +66,7 @@ export default async function bruteForce(dumpFile = "users_dump.csv") {
 
     // Alege dicționarul potrivit
     const isLetter = ["caesar", "hill", "affine"].includes(method);
-    const dictToTry = isLetter ? DICT_LETTERS : DICT;
+    const passwordDictionary = isLetter ? DICT_LETTERS : DICT;
 
     // Parsează parametrul de cheie pentru Hill/Affine
     let keyParam = rawKey;
@@ -83,38 +83,40 @@ export default async function bruteForce(dumpFile = "users_dump.csv") {
     const t0 = Date.now();
 
     if (method !== "bcrypt") {
-      for (const cand of dictToTry) {
+      for (const candidatePassword of passwordDictionary) {
         attempts++;
         // Normalizează candidatul: uppercase pentru cifruri pe litere
-        const txt = isLetter ? cand.toUpperCase() : cand;
+        const txt = isLetter
+          ? candidatePassword.toUpperCase()
+          : candidatePassword;
 
         // Generează criptarea
-        let enc;
+        let encryptedPassword;
         switch (method) {
           case "caesar":
-            enc = encryptCaesar(txt, parseInt(keyParam, 10));
+            encryptedPassword = encryptCaesar(txt, parseInt(keyParam, 10));
             break;
           case "hill":
-            enc = encryptHill(txt, keyParam);
+            encryptedPassword = encryptHill(txt, keyParam);
             break;
           case "affine":
-            enc = encryptAffine(txt, keyParam.a, keyParam.b);
+            encryptedPassword = encryptAffine(txt, keyParam.a, keyParam.b);
             break;
           case "ecb":
-            enc = encryptECB(txt, keyParam);
+            encryptedPassword = encryptECB(txt, keyParam);
             break;
           case "cbc":
-            enc = encryptCBC(txt, keyParam);
+            encryptedPassword = encryptCBC(txt, keyParam);
             break;
           case "sha256":
-            enc = sha256(keyParam + cand);
+            encryptedPassword = sha256(keyParam + candidatePassword);
             break;
         }
 
         // Verifică potrivirea
-        if (enc === stored) {
+        if (encryptedPassword === stored) {
           cracked = true;
-          password = cand;
+          password = candidatePassword;
           break;
         }
       }
@@ -132,6 +134,6 @@ export default async function bruteForce(dumpFile = "users_dump.csv") {
   }
 
   out.end();
-  console.log(`✅ Bruteforce complet, raport la: ${reportPath}`);
+  console.log(`Bruteforce complet, raport la: ${reportPath}`);
   return reportName;
 }

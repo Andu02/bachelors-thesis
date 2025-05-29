@@ -1,16 +1,39 @@
-// server/utils/handleLogin.js
+// ============================
+// Importuri necesare
+// ============================
 import jwt from "jsonwebtoken";
 import pool from "../db.js";
 import config from "../config.js";
 import { comparePasswords } from "./cryptoRouter.js";
 
+// ============================
+// Funcția principală pentru autentificare
+// ============================
 export async function handleLogin(req, res, isVulnerable = false) {
   try {
     const { username, password } = req.body;
 
-    const result = isVulnerable
-      ? await pool.query(`SELECT * FROM users WHERE username = '${username}'`)
-      : await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+    // ============================
+    // Variante vulnerabile pentru demonstrație SQL Injection
+    // ============================
+    if (isVulnerable) {
+      const rawQuery = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+      console.log("Query executat:", rawQuery);
+      const result = await pool.query(rawQuery);
+
+      if (result.rows.length > 0) {
+        return res.send("Autentificare reușită ca: " + result.rows[0].username);
+      } else {
+        return res.send("Autentificare eșuată");
+      }
+    }
+
+    // ============================
+    // Autentificare sigură (fără SQL Injection)
+    // ============================
+    const result = await pool.query("SELECT * FROM users WHERE username = $1", [
+      username,
+    ]);
 
     if (result.rows.length === 0) {
       return res.render("login", { message: "Utilizatorul nu există." });
@@ -19,6 +42,9 @@ export async function handleLogin(req, res, isVulnerable = false) {
     const user = result.rows[0];
     let extra = {};
 
+    // ============================
+    // Reconstruim parametrii în funcție de metoda criptografică
+    // ============================
     switch (user.method) {
       case "rsa": {
         const { p, q, e } = JSON.parse(user.encryption_key);
@@ -48,6 +74,9 @@ export async function handleLogin(req, res, isVulnerable = false) {
         break;
     }
 
+    // ============================
+    // Comparăm parola introdusă cu parola criptată
+    // ============================
     const valid = await comparePasswords(
       user.method,
       password,
@@ -59,8 +88,12 @@ export async function handleLogin(req, res, isVulnerable = false) {
       return res.render("login", { message: "Parolă incorectă." });
     }
 
+    // ============================
+    // Autentificare reușită: generăm token JWT
+    // ============================
     const token = jwt.sign({ username }, config.jwtSecret, { expiresIn: "1h" });
     res.cookie("authToken", token, { httpOnly: true });
+
     res.redirect("/success-login");
   } catch (err) {
     console.error("Eroare la autentificare:", err);

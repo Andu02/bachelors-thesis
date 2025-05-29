@@ -1,4 +1,8 @@
-<!-- Caesar -->
+<%
+// ============================
+// Caesar - Selectare cheie (1-25)
+// ============================
+%>
 <div id="caesar-key-group" class="mb-3" style="display: none;">
   <label for="caesar-key" class="form-label">Cheie Caesar</label>
   <select class="form-select" id="caesar-key" name="caesarKey" required>
@@ -8,7 +12,11 @@
   </select>
 </div>
 
-<!-- Affine -->
+<%
+// ============================
+// Affine - Selectare chei a și b
+// ============================
+%>
 <div id="affine-options" class="mb-3" style="display: none;">
   <label class="form-label">Chei Affine (a, b)</label>
   <div class="d-flex gap-2">
@@ -28,7 +36,11 @@
   <div id="affine-warning" class="form-text text-danger mt-1 d-none"></div>
 </div>
 
-<!-- Hill -->
+<%
+// ============================
+// Hill - Alegere dimensiune și introducere matrice
+// ============================
+%>
 <div id="hill-options" class="mb-3" style="display: none;">
   <label for="hill-size" class="form-label">Dimensiune matrice Hill</label>
   <select id="hill-size" name="hillSize" class="form-select">
@@ -39,13 +51,21 @@
   <div id="hill-matrix-container" class="mt-3"></div>
 </div>
 
-<!-- ECB / CBC -->
+<%
+// ============================
+// ECB / CBC - Introducere cheie simetrică
+// ============================
+%>
 <div id="symmetric-key-group" class="mb-3" style="display: none;">
   <label for="symmetric-key" class="form-label">Cheie simetrică (ECB/CBC)</label>
   <input type="text" class="form-control" id="symmetric-key" name="symmetricKey" maxlength="32" />
 </div>
 
-<!-- RSA -->
+<%
+// ============================
+// RSA - Introducere parametri p, q, e
+// ============================
+%>
 <div id="rsa-options" class="mb-3" style="display: none;">
   <label class="form-label">Parametri RSA</label>
   <input type="number" class="form-control mb-2" id="rsa-p" name="rsaP" placeholder="p" />
@@ -54,7 +74,11 @@
   <div id="rsa-warning" class="form-text text-danger d-none"></div>
 </div>
 
-<!-- Bcrypt -->
+<%
+// ============================
+// Bcrypt - Alegere număr de pași (salt rounds)
+// ============================
+%>
 <div id="bcrypt-options" class="mb-3" style="display: none;">
   <label for="bcrypt-salt" class="form-label">Număr pași salt (rounds)</label>
   <select class="form-select" id="bcrypt-salt" name="bcryptSalt" required>
@@ -64,7 +88,11 @@
   </select>
 </div>
 
-<!-- SHA-256 -->
+<%
+// ============================
+// SHA-256 - Introducere salt
+// ============================
+%>
 <div id="sha256-options" class="mb-3" style="display: none;">
   <label for="sha256-salt" class="form-label">Salt (SHA256)</label>
   <input
@@ -79,6 +107,3 @@
     title="Salt-ul trebuie să conțină doar litere și cifre"
   />
 </div>
-
-
-

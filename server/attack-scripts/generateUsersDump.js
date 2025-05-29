@@ -30,7 +30,7 @@ export default async function generateUsersDumps() {
     const rows = result.rows;
 
     if (rows.length === 0) {
-      throw new Error("❌ Nu există utilizatori în baza de date.");
+      throw new Error("Nu există utilizatori în baza de date.");
     }
 
     // Construim rândurile CSV, excluzând metodele nedorite
@@ -51,15 +51,12 @@ export default async function generateUsersDumps() {
     writeCsv(reportPath, lines);
 
     console.log(
-      `✅ Dump generat: ${reportPath} (${lines.length - 1} intrări; ` +
+      `Dump generat: ${reportPath} (${lines.length - 1} intrări; ` +
         `${rows.length - (lines.length - 1)} excluse)`
     );
     return reportName;
   } catch (err) {
-    console.error(
-      "❌ Eroare la generarea dump-ului de utilizatori:",
-      err.message
-    );
+    console.error("Eroare la generarea dump-ului de utilizatori:", err.message);
     throw err;
   }
 }

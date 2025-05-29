@@ -1,5 +1,3 @@
-// server/attack-scripts/generateUsers.js
-
 // ============================
 // Importuri necesare
 // ============================
@@ -89,8 +87,8 @@ export default async function generateUsers(count = 1000) {
   ];
 
   // Calculează distribuția egală
-  const base = Math.floor(count / methods.length);
-  const remainder = count % methods.length;
+  const usersPerMethodBase = Math.floor(count / methods.length);
+  const extraUsersToDistribute = count % methods.length;
 
   // ============================
   // Determină numărul de la care continuăm numerotarea
@@ -112,7 +110,7 @@ export default async function generateUsers(count = 1000) {
       userCounter = lastId + 1;
     }
   } catch (err) {
-    console.warn("⚠️ Nu s-a putut obține ultimul ID din DB:", err.message);
+    console.warn("Nu s-a putut obține ultimul ID din DB:", err.message);
   }
 
   // ============================
@@ -120,12 +118,14 @@ export default async function generateUsers(count = 1000) {
   // ============================
   const { reportName, reportPath } = getReportPath("user_data_to_encrypt");
   const output = [["username", "password", "method", "encryption_key"]];
-  const seenUsernames = new Set();
+  const existingUsers = new Set();
 
-  // Pentru fiecare metodă, ia exact `base` elemente și distribuie restul primelor `remainder` metode
-  for (let idx = 0; idx < methods.length; idx++) {
-    const method = methods[idx];
-    const take = base + (idx < remainder ? 1 : 0);
+  // Calculează câți utilizatori să aloce pentru metoda curentă.
+  // Dacă mai rămân utilizatori după împărțirea egală, primii indexi primesc câte unul în plus.
+  for (let index = 0; index < methods.length; index++) {
+    const method = methods[index];
+    const usersPerMethod =
+      usersPerMethodBase + (index < extraUsersToDistribute ? 1 : 0); // Distribuție echilibrată
 
     const passwords = (
       ["caesar", "hill", "affine"].includes(method)
@@ -133,7 +133,7 @@ export default async function generateUsers(count = 1000) {
         : allPasswords
     )
       .sort(() => 0.5 - Math.random())
-      .slice(0, take);
+      .slice(0, usersPerMethod);
 
     for (const password of passwords) {
       const username = `user${userCounter++}`;
@@ -141,11 +141,11 @@ export default async function generateUsers(count = 1000) {
       // ============================
       // Sanity-check pentru duplicate
       // ============================
-      if (seenUsernames.has(username)) {
+      if (existingUsers.has(username)) {
         console.error(`EROARE: username duplicat generat -> ${username}`);
         continue;
       }
-      seenUsernames.add(username);
+      existingUsers.add(username);
 
       let encryption_key = "";
       switch (method) {
@@ -173,6 +173,8 @@ export default async function generateUsers(count = 1000) {
       // ============================
       // Transformă parola doar dacă e metodă pe litere
       // ============================
+
+      // Metodele clasice lucrează doar cu litere mari, așadar parola este transformată în uppercase
       const adjustedPassword = ["caesar", "hill", "affine"].includes(method)
         ? password.toUpperCase()
         : password;

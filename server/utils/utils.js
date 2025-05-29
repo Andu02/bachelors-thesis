@@ -1,9 +1,15 @@
-import { isHillMatrixValid } from "../crypto-methods/hill.js";
-import crypto from "crypto";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
+// ============================
+// Importuri necesare
+// ============================
+import { isHillMatrixValid } from "../crypto-methods/hill.js"; // Verifică dacă matricea Hill este validă (determinant prim cu 26)
+import crypto from "crypto"; // Folosit pentru generarea de chei, salturi și hash-uri
+import path from "path"; // Manipulare căi de fișiere
+import fs from "fs"; // Acces la sistemul de fișiere
+import { fileURLToPath } from "url"; // Obține calea reală a fișierului curent
 
+// ============================
+// Returnează cheia de criptare și parametrii necesari în funcție de metodă
+// ============================
 export function getEncryptionData(
   method,
   hill,
@@ -18,6 +24,9 @@ export function getEncryptionData(
   let hillMatrix = null;
   let symKey = null;
 
+  // ----------------------------
+  // Pentru metoda Hill: verifică dacă matricea este pătratică și validă
+  // ----------------------------
   if (method === "hill") {
     const matrix = typeof hill === "string" ? JSON.parse(hill) : hill;
 
@@ -32,6 +41,7 @@ export function getEncryptionData(
 
     encryptionKey = JSON.stringify(matrix);
     hillMatrix = matrix;
+
     if (!isHillMatrixValid(matrix)) {
       throw new Error(
         "Matricea Hill este invalidă. Determinantul nu are invers modular în Z26."
@@ -39,11 +49,17 @@ export function getEncryptionData(
     }
   }
 
+  // ----------------------------
+  // Pentru ECB sau CBC: cheia simetrică este folosită ca atare
+  // ----------------------------
   if (method === "ecb" || method === "cbc") {
     encryptionKey = symmetricKey;
     symKey = symmetricKey;
   }
 
+  // ----------------------------
+  // Pentru RSA: se așteaptă un obiect cu p, q și exponentul public e
+  // ----------------------------
   if (method === "rsa") {
     const { p, q, e } = rsa;
     if (!p || !q || !e) {
@@ -52,6 +68,9 @@ export function getEncryptionData(
     encryptionKey = JSON.stringify({ p, q, e });
   }
 
+  // ----------------------------
+  // Pentru cifra Caesar: cheia trebuie să fie între 1 și 25
+  // ----------------------------
   if (method === "caesar") {
     if (typeof caesarKey !== "number" || caesarKey < 1 || caesarKey > 25) {
       throw new Error("Cifra Caesar necesită o cheie între 1 și 25.");
@@ -59,6 +78,9 @@ export function getEncryptionData(
     encryptionKey = caesarKey.toString();
   }
 
+  // ----------------------------
+  // Pentru cifra Afină: cheia trebuie să fie un obiect cu a prim cu 26 și b valid
+  // ----------------------------
   if (method === "affine") {
     let a, b;
     try {
@@ -83,6 +105,9 @@ export function getEncryptionData(
     encryptionKey = JSON.stringify({ a, b });
   }
 
+  // ----------------------------
+  // Pentru bcrypt: salt-ul trebuie să fie un număr între 4 și 15
+  // ----------------------------
   if (method === "bcrypt") {
     if (!bcryptSalt || isNaN(bcryptSalt) || bcryptSalt < 4 || bcryptSalt > 15) {
       throw new Error("Salt-ul Bcrypt trebuie să fie un număr între 4 și 15.");
@@ -90,6 +115,9 @@ export function getEncryptionData(
     encryptionKey = bcryptSalt.toString();
   }
 
+  // ----------------------------
+  // Pentru SHA256: salt-ul trebuie să fie un string valid
+  // ----------------------------
   if (method === "sha256") {
     if (typeof sha256Salt !== "string" || sha256Salt.trim() === "") {
       throw new Error("Salt-ul SHA256 trebuie să fie un string nevid.");
@@ -100,7 +128,9 @@ export function getEncryptionData(
   return { encryptionKey, hillMatrix, symmetricKey: symKey };
 }
 
-// ✅ Reconstruiește parametrii extra necesari decriptării
+// ============================
+// Reconstruiește parametrii suplimentari necesari pentru decriptare
+// ============================
 export function buildExtraParams(method, encryptionKey) {
   const extra = {};
 
@@ -131,8 +161,10 @@ export function buildExtraParams(method, encryptionKey) {
   return extra;
 }
 
+// ============================
+// Calculul celui mai mare divizor comun (pentru validare chei Affine sau Hill)
+// ============================
 export function gcd(a, b) {
-  // Convertim ambele la același tip
   const isBigInt = typeof a === "bigint" || typeof b === "bigint";
   if (isBigInt) {
     a = BigInt(a < 0 ? -a : a);
@@ -151,6 +183,9 @@ export function gcd(a, b) {
   }
 }
 
+// ============================
+// Invers modular pentru numere mici sau BigInt
+// ============================
 export function modInverse(a, m) {
   const isBigInt = typeof a === "bigint" || typeof m === "bigint";
   if (isBigInt) {
@@ -171,12 +206,16 @@ export function modInverse(a, m) {
   }
 }
 
+// ============================
 // Modulo pozitiv universal
+// ============================
 export function modN(n, modulo) {
   return ((n % modulo) + modulo) % modulo;
 }
 
-// Determinant recursiv (doar pentru matrici pătratice mici)
+// ============================
+// Determinant recursiv – pentru matrici mici (Hill 2x2, 3x3)
+// ============================
 export function determinant(matrix) {
   const n = matrix.length;
   if (n === 1) return matrix[0][0];
@@ -192,6 +231,9 @@ export function determinant(matrix) {
   return det;
 }
 
+// ============================
+// Obține buffer de 16 bytes din hex sau string simplu (pentru ECB/CBC)
+// ============================
 export function getKeyBuffer(keyHex) {
   if (/^[0-9a-fA-F]{32}$/.test(keyHex)) {
     return Buffer.from(keyHex, "hex");
@@ -203,6 +245,9 @@ export function getKeyBuffer(keyHex) {
     .slice(0, 16);
 }
 
+// ============================
+// Returnează numele și calea completă pentru fișierul de raport CSV
+// ============================
 export function getReportPath(name, dir = "../../public/reports") {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
@@ -210,6 +255,10 @@ export function getReportPath(name, dir = "../../public/reports") {
   const reportPath = path.resolve(__dirname, dir, reportName);
   return { reportName, reportPath };
 }
+
+// ============================
+// Scrie un fișier CSV dintr-un array de linii
+// ============================
 export function writeCsv(pathToFile, lines) {
   const content = lines
     .map((row) => row.map((val) => `"${val.replace(/"/g, '""')}"`).join(","))

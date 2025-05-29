@@ -62,12 +62,12 @@ export default async function bulkRegister(
         [username]
       );
       if (result.rows.length > 0) {
-        console.log(`⏭️ Sărim peste ${username}: există deja.`);
+        console.log(`Sărim peste ${username}: există deja.`);
         logLines.push([username, method, "skipped", "username deja existent"]);
         continue;
       }
     } catch (err) {
-      console.warn(`⚠️ Eroare la pre-check pentru ${username}:`, err.message);
+      console.warn(`Eroare la pre-check pentru ${username}:`, err.message);
       // continuăm înregistrarea, poate funcționează API-ul
     }
 
@@ -132,8 +132,8 @@ export default async function bulkRegister(
   // Scrie raportul CSV
   writeCsv(reportPath, logLines);
   console.log(
-    `✅ bulkRegister: ${success}/${users.length} OK, ${failure} eșecuri.`
+    `bulkRegister: ${success}/${users.length} OK, ${failure} eșecuri.`
   );
-  console.log(`✅ Raport bulkRegister salvat în ${reportPath}`);
+  console.log(`Raport bulkRegister salvat în ${reportPath}`);
   return reportName;
 }

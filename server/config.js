@@ -2,6 +2,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+const GLOBAL_RATE_LIMIT = 10000;
+
 const {
   JWT_SECRET,
   DATABASE_URL,
@@ -43,7 +45,7 @@ export default {
     global: {
       windowMs:
         parseInt(process.env.RATE_LIMIT_GLOBAL_WINDOW_MS, 10) || 15 * 60 * 1000,
-      max: parseInt(process.env.RATE_LIMIT_GLOBAL_MAX, 10) || 5000,
+      max: parseInt(process.env.RATE_LIMIT_GLOBAL_MAX, 10) || GLOBAL_RATE_LIMIT,
     },
     changePassword: {
       windowMs:

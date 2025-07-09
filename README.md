@@ -2,7 +2,7 @@
 
 Access to the deployed web application is available via Render (https://render.com):
 
-- not available
+- https://bachelors-thesis-web-app.onrender.com/simulation
 
 # Description
 

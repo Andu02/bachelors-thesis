@@ -41,12 +41,16 @@ The cryptographic methods are implemented server-side, with support for user-def
 
 ## Home Page
 
-![home_page](https://github.com/user-attachments/assets/cc6ef6c7-c9ce-4a84-b191-cda584899792)
+![home_page](https://github.com/user-attachments/assets/dd788726-06f3-4f93-bd68-533f87140f10)
 
 ## Register Page
 
-![register_page](https://github.com/user-attachments/assets/970652b6-b231-4c7e-867e-49abb12b62f7)
+![register_page](https://github.com/user-attachments/assets/8fe9c87a-0355-4204-8fcc-d316fceab342)
+
+## Login Page
+
+![login_page](https://github.com/user-attachments/assets/de282dc3-4204-4be9-8080-ad9d9b2383dd)
 
 ## Simulation Page
 
-![simulation_page](https://github.com/user-attachments/assets/45d88424-504f-4721-9226-15831b7bbf92)
+![simulation_page](https://github.com/user-attachments/assets/c5321178-9c52-402d-b131-b91e9968e200)
